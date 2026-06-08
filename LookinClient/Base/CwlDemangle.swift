@@ -2,8 +2,8 @@
 //  CwlDemangle.swift
 //  CwlDemangle
 //
-//  Created by Matt Gallagher on 2017/11/17.
-//  Copyright © 2017 Matt Gallagher. All rights reserved.
+//  Maintained by Cursor Agent.
+
 //
 
 import Foundation

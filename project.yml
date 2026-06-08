@@ -1,0 +1,156 @@
+name: Lookin
+options:
+  bundleIdPrefix: hughkli
+  deploymentTarget:
+    macOS: "11.5"
+  developmentLanguage: en
+  knownRegions:
+    - en
+    - Base
+    - zh-Hans
+  createIntermediateGroups: true
+  groupSortPosition: top
+  generateEmptyDirectories: false
+  minimumXcodeGenVersion: 2.38.0
+
+configs:
+  Debug: debug
+  Release: release
+
+settings:
+  base:
+    MARKETING_VERSION: 1.0.0
+    CURRENT_PROJECT_VERSION: 7
+    MACOSX_DEPLOYMENT_TARGET: "11.5"
+    SDKROOT: macosx
+    CODE_SIGN_IDENTITY: "-"
+    CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED: YES
+    CLANG_CXX_LANGUAGE_STANDARD: gnu++14
+    CLANG_ENABLE_MODULES: YES
+    CLANG_ENABLE_OBJC_ARC: YES
+    CLANG_ENABLE_OBJC_WEAK: YES
+    ENABLE_STRICT_OBJC_MSGSEND: YES
+    GCC_C_LANGUAGE_STANDARD: gnu11
+    GCC_NO_COMMON_BLOCKS: YES
+    MTL_FAST_MATH: YES
+  configs:
+    Debug:
+      GCC_OPTIMIZATION_LEVEL: 0
+      GCC_PREPROCESSOR_DEFINITIONS:
+        - DEBUG=1
+        - $(inherited)
+      ENABLE_TESTABILITY: YES
+      MTL_ENABLE_DEBUG_INFO: INCLUDE_SOURCE
+      ONLY_ACTIVE_ARCH: YES
+    Release:
+      ENABLE_NS_ASSERTIONS: NO
+      MTL_ENABLE_DEBUG_INFO: NO
+
+targets:
+  LookinClient:
+    type: application
+    platform: macOS
+    deploymentTarget: "11.5"
+    sources:
+      - path: LookinClient
+        excludes:
+          - Lookin.entitlements
+          - LookinClient_Info.plist
+    settings:
+      base:
+        PRODUCT_NAME: Lookin
+        PRODUCT_BUNDLE_IDENTIFIER: hughkli.Lookin
+        INFOPLIST_FILE: LookinClient/LookinClient_Info.plist
+        CODE_SIGN_ENTITLEMENTS: LookinClient/Lookin.entitlements
+        SWIFT_OBJC_BRIDGING_HEADER: ""
+        SWIFT_VERSION: "5.0"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        COMBINE_HIDPI_IMAGES: YES
+        DEFINES_MODULE: YES
+        ENABLE_HARDENED_RUNTIME: YES
+        GCC_PRECOMPILE_PREFIX_HEADER: NO
+        GCC_PREFIX_HEADER: ""
+        MARKETING_VERSION: 1.0.7
+        CURRENT_PROJECT_VERSION: 14
+        FRAMEWORK_SEARCH_PATHS:
+          - $(inherited)
+          - $(PROJECT_DIR)/LookinClient
+        LD_RUNPATH_SEARCH_PATHS:
+          - $(inherited)
+          - "@executable_path/../Frameworks"
+        GCC_PREPROCESSOR_DEFINITIONS:
+          - $(inherited)
+          - SHOULD_COMPILE_LOOKIN_SERVER=1
+          - LOOKIN_SHARED_MODELS_SWIFT=1
+          - LOOKIN_CATEGORIES_SWIFT=1
+          - LOOKIN_PEERTALK_SWIFT=1
+          - LOOKIN_IVAR_TRACE_SWIFT=1
+          - LOOKIN_DASHBOARD_BLUEPRINT_SWIFT=1
+      configs:
+        Debug:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: "-"
+          DEVELOPMENT_TEAM: ""
+          PROVISIONING_PROFILE_SPECIFIER: ""
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+        Release:
+          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_IDENTITY: Mac Developer
+          DEVELOPMENT_TEAM: 5V3Z8FVWHU
+          PROVISIONING_PROFILE_SPECIFIER: ""
+    configFiles:
+      Debug: Pods/Target Support Files/Pods-LookinClient/Pods-LookinClient.debug.xcconfig
+      Release: Pods/Target Support Files/Pods-LookinClient/Pods-LookinClient.release.xcconfig
+    dependencies:
+      - sdk: Security.framework
+    scheme:
+      testTargets:
+        - LookinClientUITests
+
+  LookinClientUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    deploymentTarget: "11.5"
+    sources:
+      - path: LookinClientUITests
+        excludes:
+          - Fixtures
+    resources:
+      - path: LookinClientUITests/Fixtures
+        buildPhase: resources
+    dependencies:
+      - target: LookinClient
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: hughkli.LookinClientUITests
+        TEST_TARGET_NAME: LookinClient
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        DEVELOPMENT_TEAM: ""
+      configs:
+        Debug:
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+
+schemes:
+  LookinClient:
+    build:
+      targets:
+        LookinClient: all
+        LookinClientUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: false
+      targets:
+        - name: LookinClientUITests
+          parallelizable: false
+          randomExecutionOrder: false
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

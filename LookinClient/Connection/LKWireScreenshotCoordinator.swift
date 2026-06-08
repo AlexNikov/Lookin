@@ -1,0 +1,143 @@
+//
+//  LKWireScreenshotCoordinator.swift
+//  Lookin
+//
+
+import Foundation
+import LookinShared
+
+/// Buffers wire v2 screenshots and pending detail JSON until hierarchy oids exist.
+final class LKWireScreenshotCoordinator {
+    struct BufferedScreenshot {
+        var solo: LookinImage?
+        var group: LookinImage?
+    }
+
+    private var pendingByRequest: [ObjectIdentifier: [UInt: LookinDisplayItemDetail]] = [:]
+    private var pendingByChannelTag: [ObjectIdentifier: [UInt32: [UInt: LookinDisplayItemDetail]]] = [:]
+    private var bufferedByChannel: [ObjectIdentifier: [UInt32: [UInt: BufferedScreenshot]]] = [:]
+
+    func storePendingDetail(
+        _ detail: LookinDisplayItemDetail,
+        request: LKConnectionRequest,
+        channel: LookinPTChannel
+    ) {
+        let requestKey = ObjectIdentifier(request)
+        var map = pendingByRequest[requestKey] ?? [:]
+        map[detail.displayItemOid] = detail
+        pendingByRequest[requestKey] = map
+
+        let channelKey = ObjectIdentifier(channel)
+        var byTag = pendingByChannelTag[channelKey] ?? [:]
+        var tagMap = byTag[request.tag] ?? [:]
+        tagMap[detail.displayItemOid] = detail
+        byTag[request.tag] = tagMap
+        pendingByChannelTag[channelKey] = byTag
+    }
+
+    func pendingDetail(
+        for request: LKConnectionRequest?,
+        channel: LookinPTChannel,
+        tag: UInt32,
+        oid: UInt
+    ) -> LookinDisplayItemDetail? {
+        if let request {
+            let map = pendingByRequest[ObjectIdentifier(request)]
+            if let detail = map?[oid] { return detail }
+        }
+        return pendingByChannelTag[ObjectIdentifier(channel)]?[tag]?[oid]
+    }
+
+    func bufferScreenshot(
+        oid: UInt,
+        kind: WireScreenshotKind,
+        image: LookinImage,
+        tag: UInt32,
+        channel: LookinPTChannel
+    ) {
+        let channelKey = ObjectIdentifier(channel)
+        var byTag = bufferedByChannel[channelKey] ?? [:]
+        var tagMap = byTag[tag] ?? [:]
+        var slot = tagMap[oid] ?? BufferedScreenshot()
+        switch kind {
+        case .solo:
+            slot.solo = image
+        case .group:
+            slot.group = image
+        }
+        tagMap[oid] = slot
+        byTag[tag] = tagMap
+        bufferedByChannel[channelKey] = byTag
+    }
+
+    func flushBufferedScreenshots(
+        for oid: UInt,
+        tag: UInt32,
+        channel: LookinPTChannel,
+        apply: (_ oid: UInt, _ kind: WireScreenshotKind, _ image: LookinImage) -> Void
+    ) {
+        let channelKey = ObjectIdentifier(channel)
+        guard var byTag = bufferedByChannel[channelKey],
+              var tagMap = byTag[tag],
+              let slot = tagMap.removeValue(forKey: oid) else {
+            return
+        }
+        if tagMap.isEmpty {
+            byTag.removeValue(forKey: tag)
+        } else {
+            byTag[tag] = tagMap
+        }
+        if byTag.isEmpty {
+            bufferedByChannel.removeValue(forKey: channelKey)
+        } else {
+            bufferedByChannel[channelKey] = byTag
+        }
+
+        if let solo = slot.solo {
+            apply(oid, .solo, solo)
+        }
+        if let group = slot.group {
+            apply(oid, .group, group)
+        }
+    }
+
+    func flushAllBufferedScreenshots(
+        for tag: UInt32,
+        channel: LookinPTChannel,
+        apply: (_ oid: UInt, _ kind: WireScreenshotKind, _ image: LookinImage) -> Void
+    ) {
+        guard let tagMap = bufferedByChannel[ObjectIdentifier(channel)]?[tag] else { return }
+        for oid in tagMap.keys {
+            flushBufferedScreenshots(for: oid, tag: tag, channel: channel, apply: apply)
+        }
+    }
+
+    func flushAllBufferedOnChannel(
+        _ channel: LookinPTChannel,
+        apply: (_ oid: UInt, _ tag: UInt32, _ kind: WireScreenshotKind, _ image: LookinImage) -> Void
+    ) {
+        guard let byTag = bufferedByChannel[ObjectIdentifier(channel)] else { return }
+        for tag in byTag.keys {
+            flushAllBufferedScreenshots(for: tag, channel: channel) { oid, kind, image in
+                apply(oid, tag, kind, image)
+            }
+        }
+    }
+
+    func clearPendingState(
+        for tag: UInt32,
+        channel: LookinPTChannel,
+        request: LKConnectionRequest
+    ) {
+        pendingByRequest.removeValue(forKey: ObjectIdentifier(request))
+        let channelKey = ObjectIdentifier(channel)
+        if var byTag = pendingByChannelTag[channelKey] {
+            byTag.removeValue(forKey: tag)
+            if byTag.isEmpty {
+                pendingByChannelTag.removeValue(forKey: channelKey)
+            } else {
+                pendingByChannelTag[channelKey] = byTag
+            }
+        }
+    }
+}

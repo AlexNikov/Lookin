@@ -13,7 +13,7 @@ public class LKSwiftDemangler: NSObject {
     private static var completedCache: [String:String] = [:]
     
     /// 这里返回的结果会尽可能地短，去除了很多信息
-    @objc public static func simpleParse(input: String) -> String {
+    public static func simpleParse(input: String) -> String {
         if let cachedResult = simpleCache[input] {
             return cachedResult
         }
@@ -29,7 +29,7 @@ public class LKSwiftDemangler: NSObject {
     }
     
     /// 这里返回的结果会尽可能地长、包含了 module name 等各种信息
-    @objc public static func completedParse(input: String) -> String {
+    public static func completedParse(input: String) -> String {
         if let cachedResult = completedCache[input] {
             return cachedResult
         }
