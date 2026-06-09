@@ -36,25 +36,27 @@ final class LKReloadSingleItemUpdateTaskMaker: NSObject {
 
         var tasks: [LookinStaticAsyncUpdateTask] = []
         if item.doNotFetchScreenshotReason == .permitted {
-            let task = taskFromItem(item)
+            var task = taskFromItem(item)
             task.taskType = .groupScreenshot
             tasks.append(task)
             if item.isExpandable {
-                let task2 = taskFromItem(item)
+                var task2 = taskFromItem(item)
                 task2.taskType = .soloScreenshot
                 tasks.append(task2)
             }
         } else {
-            let task = taskFromItem(item)
+            var task = taskFromItem(item)
             task.taskType = .noScreenshot
             tasks.append(task)
         }
-        tasks.first?.needBasisVisualInfo = true
+        if !tasks.isEmpty {
+            tasks[0].needBasisVisualInfo = true
+        }
         return tasks
     }
 
     private static func taskFromItem(_ item: LookinDisplayItem) -> LookinStaticAsyncUpdateTask {
-        let task = LookinStaticAsyncUpdateTask()
+        var task = LookinStaticAsyncUpdateTask()
         task.oid = item.layerObject?.oid ?? 0
         task.frameSize = item.frame.size
         task.clientReadableVersion = LKHelper.lookinReadableVersion()

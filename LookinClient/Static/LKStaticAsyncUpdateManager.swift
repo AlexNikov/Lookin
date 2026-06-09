@@ -363,7 +363,7 @@ final class LKStaticAsyncUpdateManager: NSObject {
                 return nil
             }
 
-            let newTask: LookinStaticAsyncUpdateTask?
+            var newTask: LookinStaticAsyncUpdateTask?
             if item.doNotFetchScreenshotReason == .permitted {
                 if item.isExpandable, item.isExpanded {
                     newTask = task(from: item, type: .soloScreenshot)
@@ -377,7 +377,7 @@ final class LKStaticAsyncUpdateManager: NSObject {
                 newTask = task(from: item, type: .noScreenshot)
             }
 
-            guard let newTask else { return nil }
+            guard var newTask else { return nil }
 
             if item.attributesGroupList?.isEmpty ?? true {
                 newTask.attrRequest = .need
@@ -558,7 +558,7 @@ final class LKStaticAsyncUpdateManager: NSObject {
             if packageTotalArea + currentArea > packageMaxArea || bufferTasks.count >= packageMaxTasksCount {
                 if !bufferTasks.isEmpty {
                     packageTotalArea = 0
-                    let package = LookinStaticAsyncUpdateTasksPackage()
+                    var package = LookinStaticAsyncUpdateTasksPackage()
                     package.tasks = bufferTasks
                     packages.append(package)
                     bufferTasks.removeAll()
@@ -569,7 +569,7 @@ final class LKStaticAsyncUpdateManager: NSObject {
         }
 
         if !bufferTasks.isEmpty {
-            let package = LookinStaticAsyncUpdateTasksPackage()
+            var package = LookinStaticAsyncUpdateTasksPackage()
             package.tasks = bufferTasks
             packages.append(package)
         }
@@ -580,7 +580,7 @@ final class LKStaticAsyncUpdateManager: NSObject {
         from item: LookinDisplayItem,
         type: LookinStaticAsyncUpdateTaskType
     ) -> LookinStaticAsyncUpdateTask {
-        let task = LookinStaticAsyncUpdateTask()
+        var task = LookinStaticAsyncUpdateTask()
         task.oid = item.layerObject?.oid ?? 0
         task.frameSize = item.frame.size
         task.taskType = type
@@ -631,10 +631,12 @@ private final class LKDetailUpdateRequest: NSObject {
     }
 
     func removeTask(with item: LookinDisplayItem) {
-        for pack in packages ?? [] {
-            pack.tasks = pack.tasks?.lookin_filter { task in
+        guard var packs = packages else { return }
+        for index in packs.indices {
+            packs[index].tasks = packs[index].tasks?.lookin_filter { task in
                 task.oid != item.layerObject!.oid
             }
         }
+        packages = packs
     }
 }

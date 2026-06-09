@@ -125,7 +125,7 @@ extension LKConnectionManager {
             NSLog("LookinWireV2 - screenshot decode failed oid=%u", parsed.oid)
             return
         }
-        if let detail = Self.wireScreenshotCoordinator.pendingDetail(
+        if var detail = Self.wireScreenshotCoordinator.pendingDetail(
             for: activeRequest,
             channel: channel,
             tag: tag,
@@ -137,6 +137,12 @@ extension LKConnectionManager {
             case .group:
                 detail.groupScreenshot = image
             }
+            Self.wireScreenshotCoordinator.updatePendingDetail(
+                detail,
+                request: activeRequest,
+                channel: channel,
+                tag: tag
+            )
         }
         applyWireV2Screenshot(oid: parsed.oid, kind: parsed.kind, image: image, tag: tag, channel: channel)
     }
@@ -159,7 +165,7 @@ extension LKConnectionManager {
             )
             return
         }
-        let patch = LookinDisplayItemDetail()
+        var patch = LookinDisplayItemDetail()
         patch.displayItemOid = oid
         switch kind {
         case .solo:

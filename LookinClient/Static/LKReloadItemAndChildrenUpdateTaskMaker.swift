@@ -34,7 +34,7 @@ final class LKReloadItemAndChildrenUpdateTaskMaker: NSObject {
             return nil
         }
 
-        let task = LookinStaticAsyncUpdateTask()
+        var task = LookinStaticAsyncUpdateTask()
         guard let layerObject = item.layerObject else { return nil }
         task.oid = layerObject.oid
         task.taskType = .noScreenshot

@@ -48,6 +48,26 @@ final class LKWireScreenshotCoordinator {
         return pendingByChannelTag[ObjectIdentifier(channel)]?[tag]?[oid]
     }
 
+    func updatePendingDetail(
+        _ detail: LookinDisplayItemDetail,
+        request: LKConnectionRequest?,
+        channel: LookinPTChannel,
+        tag: UInt32
+    ) {
+        if let request {
+            let requestKey = ObjectIdentifier(request)
+            var map = pendingByRequest[requestKey] ?? [:]
+            map[detail.displayItemOid] = detail
+            pendingByRequest[requestKey] = map
+        }
+        let channelKey = ObjectIdentifier(channel)
+        var byTag = pendingByChannelTag[channelKey] ?? [:]
+        var tagMap = byTag[tag] ?? [:]
+        tagMap[detail.displayItemOid] = detail
+        byTag[tag] = tagMap
+        pendingByChannelTag[channelKey] = byTag
+    }
+
     func bufferScreenshot(
         oid: UInt,
         kind: WireScreenshotKind,
