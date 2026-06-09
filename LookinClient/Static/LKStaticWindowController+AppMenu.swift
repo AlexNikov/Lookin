@@ -124,7 +124,7 @@ extension LKStaticWindowController {
 
     func appMenuManagerDidSelectOpenInNewWindow() {
         let newHierarchyInfo = LKStaticHierarchyDataSource.sharedInstance.rawHierarchyInfo?.copy() as? LookinHierarchyInfo
-        let file = LookinHierarchyFile()
+        var file = LookinHierarchyFile()
         file.serverVersion = newHierarchyInfo?.serverVersion ?? 0
         file.hierarchyInfo = newHierarchyInfo
         LKNavigationManager.sharedInstance.showReader(withHierarchyFile: file, title: nil)

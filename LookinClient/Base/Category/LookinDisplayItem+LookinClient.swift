@@ -82,8 +82,8 @@ extension LookinDisplayItem {
     }
 
     func calculateFrameToRoot() -> CGRect {
-        if let customInfo, let frameValue = customInfo.frameInWindow {
-            return frameValue.rectValue
+        if let customInfo, let frameInWindow = customInfo.frameInWindow {
+            return frameInWindow
         }
         guard let superItem else {
             return frame

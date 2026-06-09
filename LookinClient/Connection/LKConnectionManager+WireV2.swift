@@ -74,8 +74,8 @@ extension LKConnectionManager {
             return true
         }
 
-        let attachment = LookinConnectionResponseAttachment()
-        if WireRequestResponseMapper.applyResponseEnvelope(envelope, to: attachment) {
+        var attachment = LookinConnectionResponseAttachment()
+        if WireRequestResponseMapper.applyResponseEnvelope(envelope, to: &attachment) {
             if let wireDetail = envelope.detail {
                 let detail = attachment.data as? LookinDisplayItemDetail ?? WireHierarchyMapper.lookinDetail(from: wireDetail)
                 Self.wireScreenshotCoordinator.storePendingDetail(detail, request: activeRequest, channel: channel)

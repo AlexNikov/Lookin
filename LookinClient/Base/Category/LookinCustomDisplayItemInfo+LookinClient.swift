@@ -13,7 +13,6 @@ import LookinShared
 extension LookinCustomDisplayItemInfo {
     func hasValidFrame() -> Bool {
         guard let frameInWindow else { return false }
-        let rect = frameInWindow.rectValue
-        return LKHelper.validateFrame(rect)
+        return LKHelper.validateFrame(frameInWindow)
     }
 }

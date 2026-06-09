@@ -15,7 +15,7 @@ class LKExportManager: NSObject {
     }()
 
     func data(from info: LookinHierarchyInfo, imageCompression compression: CGFloat, fileName: AutoreleasingUnsafeMutablePointer<NSString?>?) -> Data? {
-        let file = LookinHierarchyFile()
+        var file = LookinHierarchyFile()
         file.serverVersion = info.serverVersion
         file.hierarchyInfo = info
 
