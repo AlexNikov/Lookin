@@ -117,7 +117,7 @@ g6_non_ui_objc_ceiling() {
   # shellcheck source=/dev/null
   source "$baseline_file"
   baseline="${LOOKINCLIENT_NON_UI_OBJC_ATOBJC:-95}"
-  count="$(rg -c '@objc\(' "$CLIENT" --glob '*.swift' 2>/dev/null | awk -F: '
+  count="$( { rg -c '@objc\(' "$CLIENT" --glob '*.swift' 2>/dev/null || true; } | awk -F: '
 {
   f = $1; c = $2
   if (f ~ /\/Base\// || f ~ /\/Dashboard\// || f ~ /\/Static\// || f ~ /\/Connection\//) next

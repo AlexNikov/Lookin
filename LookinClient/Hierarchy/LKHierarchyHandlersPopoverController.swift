@@ -18,8 +18,7 @@ class LKHierarchyHandlersPopoverController: LKBaseViewController {
         super.init(containerView: nil)
         scrollView.documentView = LKBaseView()
 
-        itemViews = (displayItem.eventHandlers ?? []).enumerated().compactMap { idx, handler in
-            guard let handler = handler as? LookinEventHandler else { return nil }
+        itemViews = (displayItem.eventHandlers ?? []).enumerated().map { idx, handler in
             let view = LKHierarchyHandlersPopoverItemView(eventHandler: handler, editable: editable)
             scrollView.documentView?.addSubview(view)
             view.needTopBorder = idx > 0
