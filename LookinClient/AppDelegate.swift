@@ -10,6 +10,7 @@ import AppCenter
 import AppCenterAnalytics
 import AppCenterCrashes
 import AppKit
+import LookinOsAppMCP
 import LookinShared
 import RxSwift
 
@@ -19,6 +20,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         LKAppMenuManager.sharedInstance().setup()
+        LKOsAppMCPServerSwift.shared.start(onPort: 47192, dataSource: self)
 
         LKPreferenceMain().appearanceTypeObservable
             .observe(on: MainScheduler.instance)
@@ -38,6 +40,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        LKOsAppMCPServerSwift.shared.start(onPort: 47192, dataSource: self)
         _ = LKConnectionManager.sharedInstance
 
         if LookinUITestSupport.isEnabled {

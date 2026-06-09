@@ -115,33 +115,7 @@ final class LKStaticWindowController: LKWindowController, NSToolbarDelegate {
             LKAppsManager.sharedInstance.fetchAppsForPopover(withImage: needImages)
         )
         .subscribe(with: self, onSuccess: { owner, apps in
-            let sorted = LKAppsManager.sortedForDisplay(apps)
-            let vc = LKMenuPopoverAppsListController(apps: sorted, source: source)
-            let popover = NSPopover()
-            vc.didSelectApp = { [weak popover] (app: LKInspectableApp?) in
-                guard let app else { return }
-                popover?.close()
-                if let error = app.serverVersionError as NSError? {
-                    if error.code == Int(LookinErrCode_ServerVersionTooLow) {
-                        LKHelper.openLookinWebsite(withPath: "faq/server-version-too-low/")
-                    } else {
-                        LKHelper.openLookinWebsite(withPath: "faq/server-version-too-high/")
-                    }
-                } else {
-                    LKStaticAsyncUpdateManager.sharedInstance.endUpdating()
-                    owner.viewController.progressView.animate(toProgress: InitialIndicatorProgressWhenFetchHierarchy)
-                    LKAppsManager.sharedInstance.switchToInspectableApp(app)
-                }
-            }
-            popover.behavior = .transient
-            popover.animates = false
-            popover.contentSize = vc.bestSize()
-            popover.contentViewController = vc
-            popover.show(
-                relativeTo: NSRect(x: 0, y: 0, width: appItemView.bounds.width, height: appItemView.bounds.height),
-                of: appItemView,
-                preferredEdge: .maxY
-            )
+            owner.presentAppSwitcherPopover(apps: apps, source: source)
         })
         .disposed(by: disposeBag)
     }

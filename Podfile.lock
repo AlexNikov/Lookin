@@ -7,6 +7,7 @@ PODS:
   - AppCenter/Core (5.12.0)
   - AppCenter/Crashes (5.12.0):
     - AppCenter/Core
+  - LookinOsAppMCP (1.0.1)
   - LookinShared (1.2.8)
   - RxRelay (6.9.0):
     - RxSwift (= 6.9.0)
@@ -15,6 +16,7 @@ PODS:
 
 DEPENDENCIES:
   - AppCenter
+  - LookinOsAppMCP (from `../LookinOsAppMCP/`)
   - LookinShared (from `../LookinServer/`)
   - RxRelay (~> 6.8)
   - RxSwift (~> 6.8)
@@ -28,16 +30,19 @@ SPEC REPOS:
     - Sparkle
 
 EXTERNAL SOURCES:
+  LookinOsAppMCP:
+    :path: "../LookinOsAppMCP/"
   LookinShared:
     :path: "../LookinServer/"
 
 SPEC CHECKSUMS:
   AppCenter: 38e27eb52113bff74426db9f500726933c8d2fd7
+  LookinOsAppMCP: bac7c9c70b5ef49969931ff5aa2410c365344410
   LookinShared: 5342b5b6accb1451dfdf748a763be594bb8bfeb1
   RxRelay: 6b0c930e5cef57d5fe2032571e5e65b78e3cbdb1
   RxSwift: 31649ace6aceeb422e16ff71c60804f9c3281ed9
   Sparkle: 9c92b492e4eedc1abe98ca77cb3ecc6f1223b01e
 
-PODFILE CHECKSUM: a1ba60bcb40d2578462092c39d8bd16fb0195731
+PODFILE CHECKSUM: bcd57be2bade26ce198f86d1c9bf8e78b4df4684
 
 COCOAPODS: 1.16.2
