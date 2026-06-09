@@ -166,6 +166,7 @@ final class LKStaticWindowController: LKWindowController, NSToolbarDelegate {
             .flexibleSpace,
             NSToolbarItem.Identifier.LKToolBarIdentifier_Measure,
             NSToolbarItem.Identifier.LKToolBarIdentifier_Console,
+            NSToolbarItem.Identifier.LKToolBarIdentifier_Logs,
         ]
         if !LKMessageManager.sharedInstance.queryMessages().isEmpty {
             ret.append(NSToolbarItem.Identifier.LKToolBarIdentifier_Message)
@@ -220,6 +221,28 @@ final class LKStaticWindowController: LKWindowController, NSToolbarDelegate {
                     }
                 })
                 .disposed(by: disposeBag)
+        case NSToolbarItem.Identifier.LKToolBarIdentifier_Logs:
+            item.target = self
+            item.action = #selector(handleLogs)
+            viewController.showLogsObservable
+                .skip(1)
+                .distinctUntilChanged()
+                .observe(on: MainScheduler.instance)
+                .subscribe(onNext: { isShowing in
+                    if let button = item.view as? NSButton {
+                        button.state = isShowing ? .on : .off
+                    }
+                })
+                .disposed(by: disposeBag)
+            LKLogsManager.shared.hasUnreadErrorsObservable
+                .distinctUntilChanged()
+                .observe(on: MainScheduler.instance)
+                .subscribe(onNext: { hasUnread in
+                    if let button = item.view as? NSButton {
+                        LKStaticWindowController.updateLogsBadge(on: button, visible: hasUnread)
+                    }
+                })
+                .disposed(by: disposeBag)
         case NSToolbarItem.Identifier.LKToolBarIdentifier_Message:
             item.label = NSLocalizedString("Notifications", comment: "")
             item.target = self
@@ -269,9 +292,7 @@ final class LKStaticWindowController: LKWindowController, NSToolbarDelegate {
             }, onFailure: { owner, error in
                 owner.viewController.progressView.resetToZero()
                 owner.isFetchingHierarchy = false
-                if let window = owner.window {
-                    NSAlert(error: error as NSError).beginSheetModal(for: window, completionHandler: nil)
-                }
+                AlertError(error as NSError, owner.window)
             })
             .disposed(by: disposeBag)
     }
@@ -295,6 +316,10 @@ final class LKStaticWindowController: LKWindowController, NSToolbarDelegate {
 
     @objc private func handleConsole() {
         viewController.showConsole = !viewController.showConsole
+    }
+
+    @objc private func handleLogs() {
+        viewController.showLogs = !viewController.showLogs
     }
 
     @objc private func handleFastMode() {
@@ -468,5 +493,31 @@ final class LKStaticWindowController: LKWindowController, NSToolbarDelegate {
                 measureButton.isEnabled = item != nil
             }
             .disposed(by: disposeBag)
+    }
+
+    private static let logsBadgeLayerKey = "logsBadgeLayer"
+
+    static func updateLogsBadge(on button: NSButton, visible: Bool) {
+        button.wantsLayer = true
+        if visible {
+            if button.layer?.sublayers?.contains(where: { $0.name == logsBadgeLayerKey }) == true {
+                return
+            }
+            let dotSize: CGFloat = 8
+            let dot = CALayer()
+            dot.name = logsBadgeLayerKey
+            dot.cornerRadius = dotSize / 2
+            dot.backgroundColor = NSColor.systemRed.cgColor
+            dot.lookin_removeImplicitAnimations()
+            // Anchor to top-right; layerMinXMargin + layerMinYMargin keeps it there
+            // as the button resizes (non-flipped coords: y=0 is bottom)
+            let w = max(button.bounds.width, 48)
+            let h = max(button.bounds.height, 34)
+            dot.frame = CGRect(x: w - dotSize - 2, y: h - dotSize - 2, width: dotSize, height: dotSize)
+            dot.autoresizingMask = [.layerMinXMargin, .layerMinYMargin]
+            button.layer?.addSublayer(dot)
+        } else {
+            button.layer?.sublayers?.filter { $0.name == logsBadgeLayerKey }.forEach { $0.removeFromSuperlayer() }
+        }
     }
 }

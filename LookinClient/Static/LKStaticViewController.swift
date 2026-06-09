@@ -30,6 +30,20 @@ final class LKStaticViewController: LKBaseViewController, NSSplitViewDelegate {
         }
     }
 
+    private let showLogsRelay = BehaviorRelay<Bool>(value: false)
+    var showLogsObservable: Observable<Bool> {
+        showLogsRelay.asObservable()
+    }
+
+    var showLogs: Bool {
+        get { showLogsRelay.value }
+        set {
+            guard newValue != showLogsRelay.value else { return }
+            showLogsRelay.accept(newValue)
+            updateLogsVisibility()
+        }
+    }
+
     var isShowingQuickSelectTutorialTips = false
     var isShowingMoveWithSpaceTutorialTips = false
 
@@ -49,6 +63,9 @@ final class LKStaticViewController: LKBaseViewController, NSSplitViewDelegate {
     private var dashboardController: LKDashboardViewController!
     private(set) var hierarchyController: LKStaticHierarchyController!
     private var consoleController: LKConsoleViewController?
+    private var logsController: LKLogsViewController?
+    private var errorNotificationTipsView: LKRedTipsView?
+    private var errorNotificationHideTimer: Timer?
     private var measureController: LKMeasureController!
 
     private let disposeBag = DisposeBag()
@@ -285,6 +302,13 @@ final class LKStaticViewController: LKBaseViewController, NSSplitViewDelegate {
                 }
             }
             .disposed(by: disposeBag)
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleErrorNotification(_:)),
+            name: .LKShowErrorNotification,
+            object: nil
+        )
     }
 
     override func viewDidAppear() {
@@ -316,6 +340,9 @@ final class LKStaticViewController: LKBaseViewController, NSSplitViewDelegate {
             customViewTipView,
             fastModeTipView,
         ]
+        if let errorView = errorNotificationTipsView, !errorView.isHidden {
+            tipViews.insert(errorView, at: 0)
+        }
         if let connectionTipsView {
             tipViews.insert(connectionTipsView, at: 0)
         }
@@ -377,6 +404,27 @@ final class LKStaticViewController: LKBaseViewController, NSSplitViewDelegate {
         view.needsLayout = true
         isShowingQuickSelectTutorialTips = false
         isShowingMoveWithSpaceTutorialTips = false
+    }
+
+    @objc private func handleErrorNotification(_ notification: Notification) {
+        let title = notification.userInfo?[LKShowErrorNotificationTitleKey] as? String ?? ""
+        guard !title.isEmpty else { return }
+        if errorNotificationTipsView == nil {
+            let v = LKRedTipsView()
+            v.isHidden = true
+            view.addSubview(v)
+            errorNotificationTipsView = v
+        }
+        errorNotificationTipsView?.title = title
+        errorNotificationTipsView?.isHidden = false
+        errorNotificationTipsView?.startAnimation()
+        view.needsLayout = true
+        errorNotificationHideTimer?.invalidate()
+        errorNotificationHideTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: false) { [weak self] _ in
+            self?.errorNotificationTipsView?.endAnimation()
+            self?.errorNotificationTipsView?.isHidden = true
+            self?.view.needsLayout = true
+        }
     }
 
     // MARK: - NSSplitViewDelegate
@@ -559,6 +607,27 @@ final class LKStaticViewController: LKBaseViewController, NSSplitViewDelegate {
             }
         }
         consoleController?.isControllerShowing = showConsole
+    }
+
+    private func updateLogsVisibility() {
+        if showLogs {
+            LKLogsManager.shared.markAllRead()
+            if logsController == nil {
+                logsController = LKLogsViewController()
+                addChild(logsController!)
+            }
+            rightSplitView.addArrangedSubview(logsController!.view)
+            if logsController!.view.bounds.height < 20 {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self else { return }
+                    let dividerIdx = self.rightSplitView.subviews.count - 2
+                    let h = self.rightSplitView.bounds.height - 150
+                    self.rightSplitView.setPosition(h, ofDividerAt: dividerIdx)
+                }
+            }
+        } else if let logsController, logsController.view.superview != nil {
+            rightSplitView.removeArrangedSubview(logsController.view)
+        }
     }
 
     func mcpInspectorParitySnapshot(uiMode: String) -> [String: Any] {

@@ -223,6 +223,9 @@
 		FE298C0CBAF49C73FCA5065D /* LKTutorialManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA8E2461F523FFD5DCB5185 /* LKTutorialManager.swift */; };
 		FED64A1824148137BB1D1100 /* LKNSView+Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E7812BFC5E7CEC979E4794A /* LKNSView+Layout.swift */; };
 		FF17E4CEB793721D7CE11906 /* LookinPreviewStructureExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1695A47BA1957F3F2E96ADC7 /* LookinPreviewStructureExporter.swift */; };
+		4B5456E572574FA8A8DC13E1 /* LKLogsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F978EDEBBAB441B9E8FE70C /* LKLogsManager.swift */; };
+		90D7AAB9C9544BECAFC14435 /* LKLogRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA9728006A7C46488985C368 /* LKLogRowView.swift */; };
+		EE0FA5F610AC4FEE9BB2E45E /* LKLogsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B110F9508D4D45B6ABF24A3E /* LKLogsViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -462,6 +465,9 @@
 		FF8488B1439A034A2586EB13 /* LKPreviewPanGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKPreviewPanGestureRecognizer.swift; sourceTree = "<group>"; };
 		FF90F121369C14CA6BB8BB67 /* LKConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKConnectionManager.swift; sourceTree = "<group>"; };
 		FFDF02A02F43ED374E708095 /* LKDashboardAttributeConstraintsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardAttributeConstraintsView.swift; sourceTree = "<group>"; };
+		2F978EDEBBAB441B9E8FE70C /* LKLogsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKLogsManager.swift; sourceTree = "<group>"; };
+		CA9728006A7C46488985C368 /* LKLogRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKLogRowView.swift; sourceTree = "<group>"; };
+		B110F9508D4D45B6ABF24A3E /* LKLogsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKLogsViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -734,6 +740,7 @@
 				34A5EBBA4E7425E1E7262A51 /* Base */,
 				9D6416245742149D055DF4DB /* Connection */,
 				7271AE33ABF8F6E3AA754E65 /* Console */,
+				9A4354FDDA0D44D488796D9D /* Logs */,
 				9DA7918E8AB8CBE1F5D5D321 /* DanceScript */,
 				24FCE1BB0C26644D1AE97585 /* Dashboard */,
 				0A568F18B6BB1B998CCF6C76 /* Export */,
@@ -800,6 +807,16 @@
 				1E3C7BD64BEA20347F38CD73 /* LKConsoleViewController.swift */,
 			);
 			path = Console;
+			sourceTree = "<group>";
+		};
+		9A4354FDDA0D44D488796D9D /* Logs */ = {
+			isa = PBXGroup;
+			children = (
+				2F978EDEBBAB441B9E8FE70C /* LKLogsManager.swift */,
+				CA9728006A7C46488985C368 /* LKLogRowView.swift */,
+				B110F9508D4D45B6ABF24A3E /* LKLogsViewController.swift */,
+			);
+			path = Logs;
 			sourceTree = "<group>";
 		};
 		72ED0F458F017B48BB715EBE /* Products */ = {
@@ -1180,6 +1197,9 @@
 				B9551E36CD2A1B0946C72F26 /* LKConnectionManager+WireV2.swift in Sources */,
 				035D9901A9B778AB48BB2307 /* LKConnectionManager.swift in Sources */,
 				D64A84E48D2C9F1961030BF9 /* LKConnectionRequest.swift in Sources */,
+				4B5456E572574FA8A8DC13E1 /* LKLogsManager.swift in Sources */,
+				90D7AAB9C9544BECAFC14435 /* LKLogRowView.swift in Sources */,
+				EE0FA5F610AC4FEE9BB2E45E /* LKLogsViewController.swift in Sources */,
 				BDA53753BA1D7868163B714B /* LKConsoleDataSource.swift in Sources */,
 				C831033162D3D73D6725453F /* LKConsoleDataSourceRowItem.swift in Sources */,
 				1DD57E59462858B75E004895 /* LKConsoleInputRowView.swift in Sources */,

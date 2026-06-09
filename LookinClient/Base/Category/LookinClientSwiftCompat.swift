@@ -147,8 +147,12 @@ func HorizontalMarginsMake(_ left: CGFloat, _ right: CGFloat) -> HorizontalMargi
 
 func AlertError(_ error: NSError, _ window: NSWindow?) {
     guard error.code != Int(LookinErrCode_Discard) else { return }
-    guard let window else { return }
-    NSAlert(error: error).beginSheetModal(for: window, completionHandler: nil)
+    LKLogsManager.shared.logError(error)
+    NotificationCenter.default.post(
+        name: .LKShowErrorNotification,
+        object: nil,
+        userInfo: [LKShowErrorNotificationTitleKey: error.localizedDescription]
+    )
 }
 
 func AlertErrorText(_ title: String, _ detail: String, _ window: NSWindow?) {

@@ -24,6 +24,7 @@ extension NSToolbarItem.Identifier {
     static let LKToolBarIdentifier_Measure = NSToolbarItem.Identifier("17")
     static let LKToolBarIdentifier_Message = NSToolbarItem.Identifier("18")
     static let LKToolBarIdentifier_FastMode = NSToolbarItem.Identifier("19")
+    static let LKToolBarIdentifier_Logs = NSToolbarItem.Identifier("20")
 }
 
 private let keyBindingPreferenceManager = "PreferenceManager"
@@ -230,6 +231,22 @@ class LKWindowToolbarHelper: NSObject {
 
             let item = NSToolbarItem(itemIdentifier: .LKToolBarIdentifier_Console)
             item.label = NSLocalizedString("Console", comment: "")
+            item.view = button
+            LKToolbarItemLayout.installMinSize(on: button, minWidth: 48)
+            return item
+        }
+
+        if identifier == .LKToolBarIdentifier_Logs {
+            let image = NSImage(systemSymbolName: "list.bullet", accessibilityDescription: nil)
+            image?.isTemplate = true
+
+            let button = NSButton()
+            button.image = image
+            button.bezelStyle = .texturedRounded
+            button.setButtonType(.pushOnPushOff)
+
+            let item = NSToolbarItem(itemIdentifier: .LKToolBarIdentifier_Logs)
+            item.label = NSLocalizedString("Logs", comment: "")
             item.view = button
             LKToolbarItemLayout.installMinSize(on: button, minWidth: 48)
             return item
