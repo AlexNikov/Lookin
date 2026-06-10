@@ -6,16 +6,17 @@ extension LKConnectionManager {
 
     /// Wire v2 multiplexes `LKJS` / `LKPG` frame types; Peertalk requests keep `LookinRequestType*` as `type`.
     static func lk_activeRequest(
-        on channel: LookinPTChannel,
+        on channel: LKPeerChannel,
         frameType type: UInt32,
         tag: UInt32
     ) -> LKConnectionRequest? {
+        let requests = LKConnectionManager.sharedInstance.activeRequestSet(for: channel)
         if wireV2FrameTypes.contains(Int(type)) {
-            return channel.lk_activeRequests?.lookin_firstFiltered { obj in
+            return requests?.lookin_firstFiltered { obj in
                 (obj as? LKConnectionRequest)?.tag == tag
             } as? LKConnectionRequest
         }
-        return channel.lk_activeRequests?.lookin_firstFiltered { obj in
+        return requests?.lookin_firstFiltered { obj in
             guard let request = obj as? LKConnectionRequest else { return false }
             return request.type == type && request.tag == tag
         } as? LKConnectionRequest
@@ -29,7 +30,7 @@ extension LKConnectionManager {
         type: UInt32,
         tag: UInt32,
         data: Data,
-        channel: LookinPTChannel,
+        channel: LKPeerChannel,
         activeRequest: LKConnectionRequest?
     ) -> Bool {
         switch type {
@@ -53,7 +54,7 @@ extension LKConnectionManager {
         data: Data,
         tag: UInt32,
         activeRequest: LKConnectionRequest,
-        channel: LookinPTChannel
+        channel: LKPeerChannel
     ) -> Bool {
         guard let envelope = try? LKWireCodecV2.decodeJSON(WireResponseEnvelope.self, from: data) else {
             LookinDiagLog.log("client wire JSON decode FAIL type=\(activeRequest.type) tag=\(tag)")
@@ -105,19 +106,19 @@ extension LKConnectionManager {
 
     private func failWireResponse(
         activeRequest: LKConnectionRequest,
-        channel: LookinPTChannel,
+        channel: LKPeerChannel,
         reason: String
     ) {
         NSLog("LookinWireV2 - %@", reason)
         activeRequest.endTimeoutCount()
-        channel.lk_activeRequests?.remove(activeRequest)
+        removeActiveRequest(activeRequest, from: channel)
         activeRequest.failBlock?(LKLookinClientErrors.wireResponseFailed(reason))
     }
 
     private func handleWireScreenshotFrame(
         data: Data,
         tag: UInt32,
-        channel: LookinPTChannel,
+        channel: LKPeerChannel,
         activeRequest: LKConnectionRequest?
     ) {
         guard let parsed = LKWireCodecV2.parseScreenshotPayload(data) else { return }
@@ -153,7 +154,7 @@ extension LKConnectionManager {
         kind: WireScreenshotKind,
         image: LookinImage,
         tag: UInt32,
-        channel: LookinPTChannel
+        channel: LKPeerChannel
     ) {
         guard LKStaticHierarchyDataSource.sharedInstance.displayItem(withOid: oid) != nil else {
             Self.wireScreenshotCoordinator.bufferScreenshot(
@@ -190,13 +191,13 @@ extension LKConnectionManager {
     private func deliverWireAttachment(
         _ attachment: LookinConnectionResponseAttachment,
         activeRequest: LKConnectionRequest,
-        channel: LookinPTChannel,
+        channel: LKPeerChannel,
         envelope: WireResponseEnvelope
     ) {
         let deliver = { [self] in
             if attachment.appIsInBackground {
                 activeRequest.endTimeoutCount()
-                channel.lk_activeRequests?.remove(activeRequest)
+                removeActiveRequest(activeRequest, from: channel)
                 activeRequest.failBlock?(LKLookinClientErrors.pingFailForBackgroundState())
                 return
             }
@@ -215,7 +216,7 @@ extension LKConnectionManager {
 
             if hasReceivedAllResponses {
                 activeRequest.endTimeoutCount()
-                channel.lk_activeRequests?.remove(activeRequest)
+                removeActiveRequest(activeRequest, from: channel)
                 flushAllBufferedWireScreenshots(for: activeRequest.tag, channel: channel)
                 Self.wireScreenshotCoordinator.clearPendingState(
                     for: activeRequest.tag,
@@ -235,14 +236,14 @@ extension LKConnectionManager {
         }
     }
 
-    private func flushBufferedWireScreenshots(for oid: UInt, tag: UInt32, channel: LookinPTChannel) {
+    private func flushBufferedWireScreenshots(for oid: UInt, tag: UInt32, channel: LKPeerChannel) {
         Self.wireScreenshotCoordinator.flushBufferedScreenshots(for: oid, tag: tag, channel: channel) {
             [self] oid, kind, image in
             applyWireV2Screenshot(oid: oid, kind: kind, image: image, tag: tag, channel: channel)
         }
     }
 
-    private func flushAllBufferedWireScreenshots(for tag: UInt32, channel: LookinPTChannel) {
+    private func flushAllBufferedWireScreenshots(for tag: UInt32, channel: LKPeerChannel) {
         Self.wireScreenshotCoordinator.flushAllBufferedScreenshots(for: tag, channel: channel) {
             [self] oid, kind, image in
             applyWireV2Screenshot(oid: oid, kind: kind, image: image, tag: tag, channel: channel)
@@ -250,7 +251,7 @@ extension LKConnectionManager {
     }
 
     /// Apply screenshots that arrived before `displayItem(withOid:)` was ready.
-    func flushWireScreenshotBuffers(on channel: LookinPTChannel?) {
+    func flushWireScreenshotBuffers(on channel: LKPeerChannel?) {
         guard let channel else { return }
         Self.wireScreenshotCoordinator.flushAllBufferedOnChannel(channel) {
             [self] oid, tag, kind, image in

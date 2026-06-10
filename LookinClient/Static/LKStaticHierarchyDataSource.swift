@@ -33,6 +33,16 @@ final class LKStaticHierarchyDataSource: LKHierarchyDataSource {
         // ObjC baseline does not refetch on selectedItem KVO — only via buildDisplayingFlatItems.
     }
 
+    /// Drop cached iOS hierarchy when ending an inspect session (MCP reconnect / demo switch).
+    func clearSessionHierarchy() {
+        rawHierarchyInfo = nil
+        rawFlatItems = nil
+        flatItems = nil
+        displayingFlatItems = nil
+        selectedItem = nil
+        appInfo = nil
+    }
+
     override func reload(with info: LookinHierarchyInfo, keepState: Bool) {
         // Wire v2 hierarchy omits appInfo unless the payload includes it — restore for preview centering.
         if info.appInfo == nil, let inspectingAppInfo = LKAppsManager.sharedInstance.inspectingApp?.appInfo {

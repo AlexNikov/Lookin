@@ -84,10 +84,14 @@ enum LKMCPAppSwitcher {
         }
         _ = showSem.wait(timeout: .now() + LKMCPTiming.mainQueueHop)
 
+        let expectedCount = apps.count
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
             let targets = LKMCPInspectTarget.launchTargets()
-            if !targets.isEmpty {
+            if targets.count >= expectedCount {
+                return response(for: targets)
+            }
+            if !targets.isEmpty, expectedCount <= 1 {
                 return response(for: targets)
             }
             Thread.sleep(forTimeInterval: LKMCPTiming.appSwitcherTilePollInterval)

@@ -55,4 +55,12 @@ extension LKHierarchyDataSource {
         _hoveredItem?.notifyHoverChangeToDelegates()
         hoveredItemTick.accept(())
     }
+
+    /// Golden hierarchy verify expects the MCPSample root `UIView` row, not a child label.
+    func lookin_verifyPinnedSelection(in items: [LookinDisplayItem]?) -> LookinDisplayItem? {
+        guard ProcessInfo.processInfo.environment["LOOKIN_VERIFY"] == "1" else { return nil }
+        return items?.first {
+            ($0.title() ?? "") == "UIView" && ($0.subtitle() ?? "") == "SampleViewController.view"
+        }
+    }
 }

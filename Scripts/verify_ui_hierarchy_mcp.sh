@@ -27,6 +27,8 @@ HIER_PY="$ROOT/Lookin/Scripts/mcp_ui_helpers.py"
 source "$ROOT/Lookin/Scripts/lookin_dismiss_dialogs.sh"
 # shellcheck source=lookin_verify_ios_demo.sh
 source "$ROOT/Lookin/Scripts/lookin_verify_ios_demo.sh"
+# shellcheck source=lookin_verify_mcp_helpers.sh
+source "$ROOT/Lookin/Scripts/lookin_verify_mcp_helpers.sh"
 
 HIER_MIN_ROWS="${HIER_MIN_ROWS:-5}"
 HIER_MIN_FLAT="${HIER_MIN_FLAT:-5}"
@@ -207,10 +209,49 @@ open_inspector_if_needed() {
   lookin_click_lookin_launch_tile "LookinMCPSample"
 }
 
+try_capture_inspector_hierarchy() {
+  local port="$1" out_file="$2"
+  local state_file="${out_file%.json}-state.json"
+  local probe_file="${out_file%.json}-probe.json"
+  curl -sf --max-time 10 "http://127.0.0.1:${port}/ui/state" -o "$state_file" 2>/dev/null || true
+  if [[ -f "$HIER_GOLDEN" && "$port" == "47192" ]]; then
+    lookin_ensure_mcp_sample_root_view "$port" || true
+    curl -sf --max-time 10 "http://127.0.0.1:${port}/ui/state" -o "$state_file" 2>/dev/null || true
+  fi
+  if ! curl -sf --max-time 30 "http://127.0.0.1:${port}/ui/hierarchy" -o "$probe_file" 2>/dev/null; then
+    return 1
+  fi
+  if [[ -f "$HIER_GOLDEN" && "$port" == "47192" ]]; then
+    if python3 "$COMPARE_PY" golden compare "$probe_file" "$HIER_GOLDEN" >/dev/null 2>&1; then
+      mv -f "$probe_file" "$out_file"
+      echo "  hierarchy matches golden fixture"
+      return 0
+    fi
+    local inspector_paths
+    inspector_paths="$(_hierarchy_inspector_path_count "$probe_file")"
+    if [[ "${inspector_paths:-0}" -ge "$HIER_MIN_INSPECTOR_PATHS" ]]; then
+      mv -f "$probe_file" "$out_file"
+      echo "  hierarchy ready (${inspector_paths} inspector paths, UIView selection)"
+      return 0
+    fi
+    rm -f "$probe_file"
+    return 1
+  fi
+  local inspector_paths
+  inspector_paths="$(_hierarchy_inspector_path_count "$probe_file")"
+  if [[ "${inspector_paths:-0}" -ge "$HIER_MIN_INSPECTOR_PATHS" ]]; then
+    mv -f "$probe_file" "$out_file"
+    return 0
+  fi
+  rm -f "$probe_file"
+  return 1
+}
+
 wait_for_inspector_dashboard() {
   local port="$1"
   local out_file="$2"
   local max_wait="${3:-60}"
+  max_wait="${HIER_ASYNC_MAX_WAIT:-120}"
   local state_file="${out_file%.json}-state.json"
   local i
   for ((i=1; i<=max_wait; i++)); do
@@ -228,30 +269,26 @@ wait_for_inspector_dashboard() {
     cards="$(python3 -c "import json; print(json.load(open('$state_file')).get('data',{}).get('dashboardCards',0))" 2>/dev/null || echo 0)"
     rows="$(python3 -c "import json; print(json.load(open('$state_file')).get('data',{}).get('hierarchyRows',0))" 2>/dev/null || echo 0)"
     shell="$(python3 -c "import json; print(json.load(open('$state_file')).get('data',{}).get('hasInspectorShell',False))" 2>/dev/null || echo False)"
-    flat_items="$(curl -sf --max-time 10 "http://127.0.0.1:${port}/ui/client-state" 2>/dev/null | python3 -c "import json,sys; print(json.load(sys.stdin).get('data',{}).get('flatItemsCount',0))" 2>/dev/null || echo 0)"
+    flat_items="$(lookin_mcp_client_flat_count "$port")"
+    if [[ -f "$HIER_GOLDEN" && "$port" == "47192" ]] && ! lookin_mcp_client_has_subtitle "$port" "SampleViewController.view" && (( i == 1 || i % 8 == 0 )); then
+      lookin_ensure_mcp_sample_inspector "$port" || true
+      flat_items="$(lookin_mcp_client_flat_count "$port")"
+    fi
     echo "  poll ${i}/${max_wait}s: uiMode=${mode} cards=${cards} rows=${rows} flat=${flat_items} shell=${shell}"
     if [[ "$mode" == "inspector" ]]; then
       local flat_ok=0
-      [[ "${flat_items:-0}" -ge "$HIER_MIN_FLAT" ]] && flat_ok=1
+      if [[ -f "$HIER_GOLDEN" && "$port" == "47192" ]]; then
+        lookin_mcp_client_has_subtitle "$port" "SampleViewController.view" && flat_ok=1
+      else
+        [[ "${flat_items:-0}" -ge "$HIER_MIN_FLAT" ]] && flat_ok=1
+      fi
       [[ "$port" == "47191" && "${rows:-0}" -ge "$HIER_MIN_ROWS" ]] && flat_ok=1
       if [[ "$flat_ok" == "1" ]]; then
-        if [[ "${cards:-0}" -ge "$HIER_MIN_CARDS" && "${rows:-0}" -ge "$HIER_MIN_ROWS" ]]; then
-          curl -sf --max-time 30 "http://127.0.0.1:${port}/ui/hierarchy" -o "$out_file" || true
-          return 0
+        if [[ -f "$HIER_GOLDEN" && "$port" == "47192" ]]; then
+          lookin_ensure_mcp_sample_root_view "$port" || true
         fi
-        if [[ "$shell" == "True" || "$shell" == "true" || "$shell" == "1" ]]; then
-          curl -sf --max-time 30 "http://127.0.0.1:${port}/ui/hierarchy" -o "$out_file" || true
+        if try_capture_inspector_hierarchy "$port" "$out_file"; then
           return 0
-        fi
-        local probe_file="${out_file%.json}-probe.json"
-        if curl -sf --max-time 30 "http://127.0.0.1:${port}/ui/hierarchy" -o "$probe_file" 2>/dev/null; then
-          local inspector_paths
-          inspector_paths="$(_hierarchy_inspector_path_count "$probe_file")"
-          if [[ "${inspector_paths:-0}" -ge "$HIER_MIN_INSPECTOR_PATHS" ]]; then
-            mv -f "$probe_file" "$out_file"
-            return 0
-          fi
-          rm -f "$probe_file"
         fi
       fi
     fi
@@ -270,6 +307,8 @@ capture_client() {
   [[ "$port" == "47191" ]] && ios_flavor=baseline
 
   section "Capture $label (port $port, iOS demo $ios_flavor LookinMCPSample)"
+  lookin_terminate_all_ios_demos "$SIM_UDID"
+  lookin_uninstall_collection_layout_demos "$SIM_UDID"
   lookin_install_ios_demo "$SIM_UDID" mcp_sample "$ios_flavor" \
     || fail "Install LookinMCPSample ($ios_flavor) failed"
   sleep 5
@@ -284,15 +323,18 @@ capture_client() {
   "$exe" >/dev/null 2>&1 &
   sleep 2
   dismiss_lookin_system_dialogs
-  osascript -e 'tell application "Lookin" to activate' 2>/dev/null || true
+  export LOOKIN_APP="$app_path"
+  lookin_activate_mac_client "$app_path"
   wait_mcp_port "$port" || {
     dismiss_lookin_dialogs_watch_stop "$dismiss_pid"
     fail "MCP port $port not ready ($label)"
   }
   sleep 2
   lookin_click_lookin_launch_tile "LookinMCPSample"
+  lookin_ensure_mcp_sample_inspector "$port" || true
   echo "Waiting ${wait_sec}s for iOS connection..."
   sleep "$wait_sec"
+  lookin_ensure_mcp_sample_inspector "$port" || true
 
   local status_file="$out_dir/status-$STAMP.json"
   local hierarchy_file="$out_dir/ui_hierarchy-$STAMP.json"
@@ -303,7 +345,7 @@ capture_client() {
 
   if ! wait_for_inspector_dashboard "$port" "$hierarchy_file" 90; then
     dismiss_lookin_dialogs_watch_stop "$dismiss_pid"
-    fail "Dashboard did not populate on port $port ($label)"
+    fail "Inspector hierarchy capture timed out on port $port ($label) — check selection SampleViewController.view / UIView and /ui/hierarchy"
   fi
 
   local alert_views

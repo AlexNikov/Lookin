@@ -20,7 +20,7 @@ final class LKWireScreenshotCoordinator {
     func storePendingDetail(
         _ detail: LookinDisplayItemDetail,
         request: LKConnectionRequest,
-        channel: LookinPTChannel
+        channel: LKPeerChannel
     ) {
         let requestKey = ObjectIdentifier(request)
         var map = pendingByRequest[requestKey] ?? [:]
@@ -37,7 +37,7 @@ final class LKWireScreenshotCoordinator {
 
     func pendingDetail(
         for request: LKConnectionRequest?,
-        channel: LookinPTChannel,
+        channel: LKPeerChannel,
         tag: UInt32,
         oid: UInt
     ) -> LookinDisplayItemDetail? {
@@ -51,7 +51,7 @@ final class LKWireScreenshotCoordinator {
     func updatePendingDetail(
         _ detail: LookinDisplayItemDetail,
         request: LKConnectionRequest?,
-        channel: LookinPTChannel,
+        channel: LKPeerChannel,
         tag: UInt32
     ) {
         if let request {
@@ -73,7 +73,7 @@ final class LKWireScreenshotCoordinator {
         kind: WireScreenshotKind,
         image: LookinImage,
         tag: UInt32,
-        channel: LookinPTChannel
+        channel: LKPeerChannel
     ) {
         let channelKey = ObjectIdentifier(channel)
         var byTag = bufferedByChannel[channelKey] ?? [:]
@@ -93,7 +93,7 @@ final class LKWireScreenshotCoordinator {
     func flushBufferedScreenshots(
         for oid: UInt,
         tag: UInt32,
-        channel: LookinPTChannel,
+        channel: LKPeerChannel,
         apply: (_ oid: UInt, _ kind: WireScreenshotKind, _ image: LookinImage) -> Void
     ) {
         let channelKey = ObjectIdentifier(channel)
@@ -123,7 +123,7 @@ final class LKWireScreenshotCoordinator {
 
     func flushAllBufferedScreenshots(
         for tag: UInt32,
-        channel: LookinPTChannel,
+        channel: LKPeerChannel,
         apply: (_ oid: UInt, _ kind: WireScreenshotKind, _ image: LookinImage) -> Void
     ) {
         guard let tagMap = bufferedByChannel[ObjectIdentifier(channel)]?[tag] else { return }
@@ -133,7 +133,7 @@ final class LKWireScreenshotCoordinator {
     }
 
     func flushAllBufferedOnChannel(
-        _ channel: LookinPTChannel,
+        _ channel: LKPeerChannel,
         apply: (_ oid: UInt, _ tag: UInt32, _ kind: WireScreenshotKind, _ image: LookinImage) -> Void
     ) {
         guard let byTag = bufferedByChannel[ObjectIdentifier(channel)] else { return }
@@ -146,7 +146,7 @@ final class LKWireScreenshotCoordinator {
 
     func clearPendingState(
         for tag: UInt32,
-        channel: LookinPTChannel,
+        channel: LKPeerChannel,
         request: LKConnectionRequest
     ) {
         pendingByRequest.removeValue(forKey: ObjectIdentifier(request))

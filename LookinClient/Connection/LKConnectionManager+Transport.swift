@@ -5,7 +5,7 @@ import RxSwift
 
 final class LKSimulatorConnectionPort: CustomStringConvertible {
     var portNumber: Int32 = 0
-    var connectedChannel: LookinPTChannel?
+    var connectedChannel: LKPeerChannel?
 
     var description: String {
         "number:\(portNumber)"
@@ -15,7 +15,7 @@ final class LKSimulatorConnectionPort: CustomStringConvertible {
 final class LKUSBConnectionPort: CustomStringConvertible {
     var portNumber: Int32 = 0
     var deviceID: NSNumber?
-    var connectedChannel: LookinPTChannel?
+    var connectedChannel: LKPeerChannel?
 
     var description: String {
         "number:\(portNumber), deviceID:\(String(describing: deviceID)), connectedChannel:\(String(describing: connectedChannel))"
@@ -41,8 +41,8 @@ extension LKConnectionManager {
     }
 
     /// Closes discovery transports except the target session (USB is unstable while sim link stays open).
-    public func releaseDiscoveryChannels(except keep: LookinPTChannel?) {
-        var toRelease: [LookinPTChannel] = []
+    public func releaseDiscoveryChannels(except keep: LKPeerChannel?) {
+        var toRelease: [LKPeerChannel] = []
         for port in allSimulatorPorts {
             if let channel = port.connectedChannel, channel !== keep {
                 toRelease.append(channel)
@@ -59,7 +59,7 @@ extension LKConnectionManager {
     }
 
     /// Clears cached Peertalk channels and closes the transport (e.g. when leaving the inspector).
-    public func releaseCachedChannel(_ channel: LookinPTChannel) {
+    public func releaseCachedChannel(_ channel: LKPeerChannel) {
         for port in allSimulatorPorts where port.connectedChannel === channel {
             port.connectedChannel = nil
         }
@@ -73,14 +73,25 @@ extension LKConnectionManager {
         }
     }
 
-    private func purgeDisconnectedCachedChannels() {
+    private func purgeDisconnectedCachedChannels() async {
         for port in allSimulatorPorts {
-            guard let channel = port.connectedChannel, !channel.isConnected else { continue }
-            channel.close()
-            port.connectedChannel = nil
+            guard let channel = port.connectedChannel else { continue }
+            if let async = channel as? LKAsyncPeerChannel {
+                await async.reconcileTransportState()
+            }
+            let portMismatch = channel.targetPort != Int(port.portNumber) && channel.targetPort > 0
+            guard !portMismatch, channel.isConnected else {
+                channel.close()
+                port.connectedChannel = nil
+                continue
+            }
         }
         for port in allUSBPorts {
-            guard let channel = port.connectedChannel, !channel.isConnected else { continue }
+            guard let channel = port.connectedChannel else { continue }
+            if let async = channel as? LKAsyncPeerChannel {
+                await async.reconcileTransportState()
+            }
+            guard !channel.isConnected else { continue }
             channel.close()
             port.connectedChannel = nil
         }
@@ -93,7 +104,7 @@ extension LKConnectionManager {
         mcpLastConnectSnapshot = nil
     }
 
-    public func tryToConnectAllPorts(forceFreshDiscovery: Bool = false) -> Single<[LookinPTChannel]> {
+    public func tryToConnectAllPorts(forceFreshDiscovery: Bool = false) -> Single<[LKPeerChannel]> {
         Single.create { single in
             let task = Task { [self] in
                 // ObjC parity: normal discovery only purges dead transports. Full rediscovery
@@ -101,8 +112,13 @@ extension LKConnectionManager {
                 // launch poll / auto-reconnect while inspectingApp is nil (breaks USB devices).
                 if forceFreshDiscovery {
                     self.prepareForAppRediscovery()
+                    // iOS relisten + Peertalk bind is async after POST /relisten-peertalk.
+                    let delayNs: UInt64 = ProcessInfo.processInfo.environment["LOOKIN_VERIFY"] == "1"
+                        ? 2_000_000_000
+                        : 1_000_000_000
+                    try? await Task.sleep(nanoseconds: delayNs)
                 } else {
-                    self.purgeDisconnectedCachedChannels()
+                    await self.purgeDisconnectedCachedChannels()
                 }
                 async let simulatorChannels = self.tryConnectAllSimulatorPorts()
                 async let usbChannels = self.tryConnectAllUSBDevices()
@@ -122,7 +138,7 @@ extension LKConnectionManager {
 
     private struct SimulatorConnectAttempt {
         let portNumber: Int32
-        let channel: LookinPTChannel?
+        let channel: LKPeerChannel?
         let errnoCode: Int?
     }
 
@@ -132,16 +148,18 @@ extension LKConnectionManager {
         }
     }
 
-    private func tryConnectAllSimulatorPorts(isRetryAfterIOSRelisten: Bool = false) async -> [LookinPTChannel] {
+    private func tryConnectAllSimulatorPorts(isRetryAfterIOSRelisten: Bool = false) async -> [LKPeerChannel] {
         guard Self.hasBootedIOSSimulator() else { return [] }
 
         let channels = await performSimulatorConnectAttempts()
         if channels.isEmpty, !isRetryAfterIOSRelisten {
+            let verifyNoListeners = ProcessInfo.processInfo.environment["LOOKIN_VERIFY"] == "1"
+                && simulatorPortsForDiscovery().isEmpty
             let errors = mcpLastConnectSnapshot?.portErrors ?? []
             let allRefused = !errors.isEmpty && errors.allSatisfy { $0.hasSuffix(":61") }
             // :47190 MCP exists only in Simulator (localhost port-forward). Skip on USB-only workflows.
-            if allRefused, requestIOSPeertalkRelisten() {
-                try? await Task.sleep(nanoseconds: 600_000_000)
+            if verifyNoListeners || allRefused, requestIOSPeertalkRelisten() {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
                 return await tryConnectAllSimulatorPorts(isRetryAfterIOSRelisten: true)
             }
         }
@@ -185,9 +203,27 @@ extension LKConnectionManager {
         return booted
     }
 
-    private func performSimulatorConnectAttempts() async -> [LookinPTChannel] {
-        await withTaskGroup(of: SimulatorConnectAttempt.self) { group in
-            for port in allSimulatorPorts {
+    private func simulatorPortsForDiscovery() -> [LKSimulatorConnectionPort] {
+        guard ProcessInfo.processInfo.environment["LOOKIN_VERIFY"] == "1" else {
+            return allSimulatorPorts
+        }
+        let listening = allSimulatorPorts.filter {
+            LKMCPClientDiagnostics.simulatorPortIsListening(Int($0.portNumber))
+        }
+        // Do not parallel-scan the full port range — stray connects break iOS Peertalk.
+        guard !listening.isEmpty else { return [] }
+        guard listening.count > 1 else { return listening }
+        // Prefer the lowest listening port (CustomInfo demo binds 47164 first in the range).
+        if let preferred = listening.min(by: { $0.portNumber < $1.portNumber }) {
+            return [preferred]
+        }
+        return listening
+    }
+
+    private func performSimulatorConnectAttempts() async -> [LKPeerChannel] {
+        let ports = simulatorPortsForDiscovery()
+        return await withTaskGroup(of: SimulatorConnectAttempt.self) { group in
+            for port in ports {
                 group.addTask { [self] in
                     do {
                         let channel = try await connectToSimulatorPort(port)
@@ -201,7 +237,7 @@ extension LKConnectionManager {
                     }
                 }
             }
-            var channels: [LookinPTChannel] = []
+            var channels: [LKPeerChannel] = []
             var connectErrors: [String] = []
             var connectedPorts: [Int] = []
             for await attempt in group {
@@ -287,34 +323,26 @@ extension LKConnectionManager {
         return succeeded
     }
 
-    private func connectToSimulatorPort(_ port: LKSimulatorConnectionPort) async throws -> LookinPTChannel {
+    private func connectToSimulatorPort(_ port: LKSimulatorConnectionPort) async throws -> LKPeerChannel {
         if let connectedChannel = port.connectedChannel {
-            if connectedChannel.isConnected {
+            if let async = connectedChannel as? LKAsyncPeerChannel {
+                await async.reconcileTransportState()
+            }
+            let portMatches = connectedChannel.targetPort == Int(port.portNumber)
+            if connectedChannel.isConnected, portMatches {
                 return connectedChannel
             }
             connectedChannel.close()
             port.connectedChannel = nil
         }
 
-        return try await withCheckedThrowingContinuation { continuation in
-            let localChannel = LookinPTChannel.channel(withDelegate: self)
-            localChannel.connect(
-                toPort: UInt16(port.portNumber),
-                ipv4Address: in_addr_t(INADDR_LOOPBACK)
-            ) { error, _ in
-                if let error {
-                    localChannel.close()
-                    continuation.resume(throwing: error)
-                } else {
-                    localChannel.targetPort = Int(port.portNumber)
-                    port.connectedChannel = localChannel
-                    continuation.resume(returning: localChannel)
-                }
-            }
-        }
+        let wrapper = LKAsyncPeerChannel(manager: self)
+        try await wrapper.connect(toPort: UInt16(port.portNumber))
+        port.connectedChannel = wrapper
+        return wrapper
     }
 
-    private func tryConnectAllUSBDevices() async -> [LookinPTChannel] {
+    private func tryConnectAllUSBDevices() async -> [LKPeerChannel] {
         guard !allUSBPorts.isEmpty else {
             LookinDiagLog.log("client connect usb channels=0 (no USB device in allUSBPorts — plug in device or unlock iPhone)")
             return []
@@ -338,8 +366,8 @@ extension LKConnectionManager {
         return []
     }
 
-    private func performUSBConnectAttempts() async -> [LookinPTChannel] {
-        await withTaskGroup(of: (Int32, LookinPTChannel?, Int?).self) { group in
+    private func performUSBConnectAttempts() async -> [LKPeerChannel] {
+        await withTaskGroup(of: (Int32, LKPeerChannel?, Int?).self) { group in
             for port in allUSBPorts {
                 group.addTask { [self] in
                     do {
@@ -350,7 +378,7 @@ extension LKConnectionManager {
                     }
                 }
             }
-            var channels: [LookinPTChannel] = []
+            var channels: [LKPeerChannel] = []
             var connectErrors: [String] = []
             for await attempt in group {
                 if let channel = attempt.1 {
@@ -371,9 +399,13 @@ extension LKConnectionManager {
         }
     }
 
-    private func connectToUSBPort(_ port: LKUSBConnectionPort) async throws -> LookinPTChannel {
+    private func connectToUSBPort(_ port: LKUSBConnectionPort) async throws -> LKPeerChannel {
         if let connectedChannel = port.connectedChannel {
-            if connectedChannel.isConnected {
+            if let async = connectedChannel as? LKAsyncPeerChannel {
+                await async.reconcileTransportState()
+            }
+            let portMatches = connectedChannel.targetPort == Int(port.portNumber)
+            if connectedChannel.isConnected, portMatches {
                 return connectedChannel
             }
             connectedChannel.close()
@@ -384,23 +416,14 @@ extension LKConnectionManager {
             throw LKLookinClientErrors.inner
         }
 
-        return try await withCheckedThrowingContinuation { continuation in
-            let channel = LookinPTChannel.channel(withDelegate: self)
-            channel.connect(
-                toPort: port.portNumber,
-                over: LookinPTUSBHub.shared(),
-                deviceID: deviceID
-            ) { error in
-                if let error {
-                    channel.close()
-                    continuation.resume(throwing: error)
-                } else {
-                    channel.targetPort = Int(port.portNumber)
-                    port.connectedChannel = channel
-                    continuation.resume(returning: channel)
-                }
-            }
-        }
+        let wrapper = LKAsyncPeerChannel(manager: self)
+        try await wrapper.connect(
+            toPort: port.portNumber,
+            over: LookinPTUSBHub.shared(),
+            deviceID: deviceID
+        )
+        port.connectedChannel = wrapper
+        return wrapper
     }
 
     // MARK: - USB Device Listening

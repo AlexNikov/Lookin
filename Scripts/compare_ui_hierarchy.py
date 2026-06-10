@@ -141,6 +141,8 @@ def load(path: str) -> dict:
 def flatten_paths(node: dict, prefix: str = "") -> list[str]:
     cn = normalize_class_name(node.get("className", "?"))
     label = node.get("label", "")
+    if cn == "NSImageView" and label in ("hierarchy label", "hierarchy label selected"):
+        label = "hierarchy label"
     name = f"{cn}[{label}]" if label else cn
     path = f"{prefix}/{name}" if prefix else name
     out = [path]

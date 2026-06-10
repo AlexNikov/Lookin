@@ -69,9 +69,9 @@ public final class LKAppsManager: NSObject {
     }
 
     private static func filterChannels(
-        _ channels: [LookinPTChannel],
+        _ channels: [LKPeerChannel],
         transport: LKInspectTransportFilter
-    ) -> [LookinPTChannel] {
+    ) -> [LKPeerChannel] {
         let conn = LKConnectionManager.sharedInstance
         switch transport {
         case .usb:
@@ -272,13 +272,32 @@ public final class LKAppsManager: NSObject {
         if hasTargets {
             switchStatusRelay.accept(.fetchingAppList)
         }
-        return fetchAppInfos(withImage: needImages, localInfos: nil)
+        let needsDualTargets = inspectingApp != nil
+            && LKConnectionManager.sharedInstance.hasAttachedUSBDevices
+        return fetchAppInfosForPopoverUnlocked(withImage: needImages, needsDualTargets: needsDualTargets)
             .do(onDispose: { [weak self] in
                 // Only reset if we're still in fetchingAppList; don't overwrite a connecting state
                 // that started while this fetch was in flight (shouldn't happen, but be safe).
                 guard let self, case .fetchingAppList = self.switchStatusRelay.value else { return }
                 self.switchStatusRelay.accept(.idle)
             })
+    }
+
+    /// Popover list while inspecting: prefer a light fetch; full relisten only if sim+USB list is incomplete.
+    private func fetchAppInfosForPopoverUnlocked(
+        withImage needImages: Bool,
+        needsDualTargets: Bool
+    ) -> Single<[LKInspectableApp]> {
+        func usableCount(_ apps: [LKInspectableApp]) -> Int {
+            Self.usableInspectableApps(from: apps).count
+        }
+        return fetchAppInfos(withImage: needImages, localInfos: nil, forceFreshDiscovery: false)
+            .flatMap { [weak self] apps -> Single<[LKInspectableApp]> in
+                guard let self, needsDualTargets, usableCount(apps) < 2 else {
+                    return .just(apps)
+                }
+                return self.fetchAppInfos(withImage: needImages, localInfos: nil, forceFreshDiscovery: true)
+            }
     }
 
     /// Toolbar app popover: cancels any in-flight switch and starts a fresh one.
@@ -340,13 +359,20 @@ public final class LKAppsManager: NSObject {
 
     /// Ends the current inspect session and closes Peertalk so the demo can accept a new client.
     public func endInspectingSession() {
+        LKStaticAsyncUpdateManager.sharedInstance.endUpdating()
+        inspectingApp?.cancelHierarchyDetailFetching()
         let channel = inspectingApp?.channel
+        let hadActiveInspection = inspectingApp != nil
         inspectingApp = nil
+        LKConnectionManager.sharedInstance.cancelAllActivePeerRequests()
         if let channel {
             LKConnectionManager.sharedInstance.releaseCachedChannel(channel)
         }
-        LKConnectionManager.sharedInstance.releaseAllDiscoveryChannels()
+        if hadActiveInspection {
+            LKConnectionManager.sharedInstance.releaseAllDiscoveryChannels()
+        }
         LKConnectionManager.sharedInstance.clearMCPSessionSnapshots()
+        LKStaticHierarchyDataSource.sharedInstance.clearSessionHierarchy()
     }
 
     /// Re-discovers simulator/USB apps with a fresh Peertalk scan (use on toolbar Reload after switching demo).
@@ -362,37 +388,40 @@ public final class LKAppsManager: NSObject {
         guard let targetInfo = app.appInfo else {
             return .error(LKLookinClientErrors.inner)
         }
-        let conn = LKConnectionManager.sharedInstance
         let wantsUSB = Self.inspectSessionUsesUSB(app)
         intentionalSessionChange = true
 
-        let reloadSingle: Single<(LKInspectableApp, LookinHierarchyInfo)>
-        if let channel = app.channel, channel.isConnected {
-            // Extra sim/USB discovery links destabilize USB reload — keep only the active session open.
-            conn.releaseDiscoveryChannels(except: channel)
-            reloadSingle = app.fetchHierarchyData()
-                .map { (app, $0) }
-                .catch { [weak self] _ -> Single<(LKInspectableApp, LookinHierarchyInfo)> in
-                    guard let self else { return .error(LKLookinClientErrors.noConnect) }
-                    LookinDiagLog.log(
-                        "client reload: live hierarchy failed — reattach usb=\(wantsUSB)"
-                    )
-                    return self.fetchHierarchyAfterRediscover(
-                        matching: app,
-                        targetInfo: targetInfo,
-                        wantsUSB: wantsUSB
-                    )
+        return prepareInspectableChannel(app.channel)
+            .andThen(
+                Single.deferred { [self] in
+                    let conn = LKConnectionManager.sharedInstance
+                    let reloadSingle: Single<(LKInspectableApp, LookinHierarchyInfo)>
+                    if let channel = app.channel, channel.isConnected {
+                        conn.releaseDiscoveryChannels(except: channel)
+                        reloadSingle = app.fetchHierarchyData()
+                            .map { (app, $0) }
+                            .catch { [weak self] _ -> Single<(LKInspectableApp, LookinHierarchyInfo)> in
+                                guard let self else { return .error(LKLookinClientErrors.noConnect) }
+                                LookinDiagLog.log(
+                                    "client reload: live hierarchy failed — reattach usb=\(wantsUSB)"
+                                )
+                                return self.fetchHierarchyAfterRediscover(
+                                    matching: app,
+                                    targetInfo: targetInfo,
+                                    wantsUSB: wantsUSB
+                                )
+                            }
+                    } else {
+                        LookinDiagLog.log("client reload: channel down — reattach usb=\(wantsUSB)")
+                        reloadSingle = self.fetchHierarchyAfterRediscover(
+                            matching: app,
+                            targetInfo: targetInfo,
+                            wantsUSB: wantsUSB
+                        )
+                    }
+                    return reloadSingle
                 }
-        } else {
-            LookinDiagLog.log("client reload: channel down — reattach usb=\(wantsUSB)")
-            reloadSingle = fetchHierarchyAfterRediscover(
-                matching: app,
-                targetInfo: targetInfo,
-                wantsUSB: wantsUSB
             )
-        }
-
-        return reloadSingle
             .do(onSuccess: { [weak self] fresh, _ in
                 self?.inspectingApp = fresh
             })
@@ -423,6 +452,7 @@ public final class LKAppsManager: NSObject {
     }
 
     private static let fetchAppInfosLock = NSLock()
+    private static let fetchAppInfosQueue = DispatchQueue(label: "lookin.client.fetchAppInfos", qos: .userInitiated)
     private static var fetchLockAcquiredAt: TimeInterval?
 
     static func mcpFetchBlockedAgeSec() -> TimeInterval {
@@ -443,18 +473,59 @@ public final class LKAppsManager: NSObject {
         default: transportFilter = nil
         }
         return Single.deferred { [self] in
-            Self.fetchLockAcquiredAt = Date().timeIntervalSince1970
-            Self.fetchAppInfosLock.lock()
-            return self.fetchAppInfosUnlocked(
-                withImage: needImages,
-                localInfos: localInfos,
-                forceFreshDiscovery: forceFreshDiscovery,
-                transportFilter: transportFilter
-            )
-            .do(onDispose: {
-                Self.fetchAppInfosLock.unlock()
-                Self.fetchLockAcquiredAt = nil
-            })
+            Single.create { observer in
+                var terminated = false
+                let terminate: (Result<[LKInspectableApp], Error>) -> Void = { result in
+                    guard !terminated else { return }
+                    terminated = true
+                    switch result {
+                    case .success(let apps):
+                        observer(.success(apps))
+                    case .failure(let error):
+                        observer(.failure(error))
+                    }
+                }
+                var innerDisposable: Disposable?
+                let work = DispatchWorkItem { [self] in
+                    Self.fetchLockAcquiredAt = Date().timeIntervalSince1970
+                    Self.fetchAppInfosLock.lock()
+                    innerDisposable = self.fetchAppInfosUnlocked(
+                        withImage: needImages,
+                        localInfos: localInfos,
+                        forceFreshDiscovery: forceFreshDiscovery,
+                        transportFilter: transportFilter
+                    )
+                    .do(onDispose: {
+                        Self.fetchAppInfosLock.unlock()
+                        Self.fetchLockAcquiredAt = nil
+                    })
+                    .subscribe(
+                        onSuccess: { terminate(.success($0)) },
+                        onFailure: { terminate(.failure($0)) }
+                    )
+                }
+                Self.fetchAppInfosQueue.async(execute: work)
+                return Disposables.create {
+                    work.cancel()
+                    innerDisposable?.dispose()
+                    terminate(.failure(LKLookinClientErrors.discard()))
+                }
+            }
+        }
+    }
+
+    /// Restart read loop on async Peertalk before toolbar reload / rediscover.
+    private func prepareInspectableChannel(_ channel: LKPeerChannel?) -> Completable {
+        Completable.create { done in
+            guard let async = channel as? LKAsyncPeerChannel else {
+                done(.completed)
+                return Disposables.create()
+            }
+            Task {
+                await async.reconcileTransportState()
+                done(.completed)
+            }
+            return Disposables.create()
         }
     }
 
@@ -475,7 +546,7 @@ public final class LKAppsManager: NSObject {
 
         return LKConnectionManager.sharedInstance.tryToConnectAllPorts(forceFreshDiscovery: forceFreshDiscovery)
             .flatMap { connectedChannels -> Single<[LKInspectableApp]> in
-                let scopedChannels: [LookinPTChannel]
+                let scopedChannels: [LKPeerChannel]
                 if let transportFilter {
                     scopedChannels = Self.filterChannels(connectedChannels, transport: transportFilter)
                     if scopedChannels.isEmpty {
@@ -491,8 +562,19 @@ public final class LKAppsManager: NSObject {
                     LookinDiagLog.log("client fetchAppInfos: no Peertalk channels (is demo running with LookinServer?)")
                     return .just([])
                 }
+                let liveChannels = scopedChannels.filter(\.isConnected)
+                if liveChannels.isEmpty {
+                    let ports = scopedChannels.map { String($0.targetPort) }.joined(separator: ",")
+                    LookinDiagLog.log(
+                        "client fetchAppInfos: \(scopedChannels.count) channel(s) ports=[\(ports)] but none connected"
+                    )
+                    return .just([])
+                }
 
-                let requestSingles: [Single<LKInspectableApp?>] = scopedChannels.map { [weak self] channel in
+                let discoverPerChannelTimeout = LKWireClientRequestTimeout.appInfo
+                    + LKWireClientRequestTimeout.preflightPingBeforeApp
+                    + 2
+                let requestSingles: [Single<LKInspectableApp?>] = liveChannels.map { [weak self] channel in
                     // The active inspection channel is busy streaming hierarchy data (LookinRequestTypeHierarchy)
                     // and won't respond to a new LookinRequestTypeApp — request times out with code -405.
                     // Reuse the already-known app info instead of sending a fresh discovery request.
@@ -514,6 +596,7 @@ public final class LKAppsManager: NSObject {
                         wirePayload: .app(appParams)
                     )
                     .take(1)
+                    .timeout(.seconds(Int(discoverPerChannelTimeout)), scheduler: MainScheduler.instance)
                     .asSingle()
                     .map { pair -> LKInspectableApp? in
                         Self.inspectableApp(
@@ -544,10 +627,10 @@ public final class LKAppsManager: NSObject {
                     .map { results in
                         let apps = results.compactMap { $0 }
                         let usable = apps.filter { $0.serverVersionError == nil && $0.appInfo != nil }
-                        if usable.isEmpty, !scopedChannels.isEmpty {
-                            let ports = scopedChannels.map { String($0.targetPort) }.joined(separator: ",")
+                        if usable.isEmpty, !liveChannels.isEmpty {
+                            let ports = liveChannels.map { String($0.targetPort) }.joined(separator: ",")
                             LookinDiagLog.log(
-                                "client fetchAppInfos: 0 apps from \(scopedChannels.count) channel(s) ports=[\(ports)] — iPhone: Run CollLayout demo on device (pod install + rebuild); Simulator: launch demo, bring Simulator to front"
+                                "client fetchAppInfos: 0 apps from \(liveChannels.count) channel(s) ports=[\(ports)] — iPhone: Run CollLayout demo on device (pod install + rebuild); Simulator: launch demo, bring Simulator to front"
                             )
                         }
                         let channels = usable.map { app -> [String: Any] in
@@ -579,10 +662,10 @@ public final class LKAppsManager: NSObject {
     private static func inspectableApp(
         from pair: LookinPair,
         validAppInfos: [LookinAppInfo],
-        channel: LookinPTChannel
+        channel: LKPeerChannel
     ) -> LKInspectableApp? {
         guard let response = pair.first as? LookinConnectionResponseAttachment,
-              let relatedChannel = pair.second as? LookinPTChannel else {
+              let relatedChannel = pair.second as? LKPeerChannel else {
             NSLog(
                 "LookinClient - App discovery unexpected zip item: %@",
                 String(describing: type(of: pair.first as Any))
@@ -620,7 +703,7 @@ public final class LKAppsManager: NSObject {
         return app
     }
 
-    private func tryToConnectAllPorts() -> Single<[LookinPTChannel]> {
+    private func tryToConnectAllPorts() -> Single<[LKPeerChannel]> {
         LKConnectionManager.sharedInstance.tryToConnectAllPorts()
     }
 

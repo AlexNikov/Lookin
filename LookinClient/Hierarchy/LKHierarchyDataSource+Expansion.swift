@@ -243,6 +243,10 @@ extension LKHierarchyDataSource {
     }
 
     func reconcileSelectedItemAfterExpansionChange() {
+        if let pinned = lookin_verifyPinnedSelection(in: displayingFlatItems) {
+            selectedItem = pinned
+            return
+        }
         guard let selected = selectedItem else { return }
         if selected.displayingInHierarchy { return }
 

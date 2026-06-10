@@ -73,10 +73,15 @@ public final class LKMCPClientDiagnostics {
 
     public func mcpOperationWillBegin() {
         mcpOperationStartedAt = Date().timeIntervalSince1970
-        DispatchQueue.main.async {
+        let pauseLaunchDiscovery = {
             LKNavigationManager.sharedInstance.launchWindowController?
                 .launchViewController?
                 .mcpPauseDiscoveryPolling()
+        }
+        if Thread.isMainThread {
+            pauseLaunchDiscovery()
+        } else {
+            DispatchQueue.main.sync(execute: pauseLaunchDiscovery)
         }
     }
 
@@ -159,7 +164,13 @@ public final class LKMCPClientDiagnostics {
         Self.discoverLock.lock()
         defer { Self.discoverLock.unlock() }
 
-        let effectiveTimeout = max(timeout, LKMCPTiming.minimumDiscoverTimeout)
+        let effectiveTimeout = max(
+            timeout,
+            LKMCPTiming.minimumDiscoverTimeout,
+            LKWireClientRequestTimeout.appInfo
+                + LKWireClientRequestTimeout.preflightPingBeforeApp
+                + 8
+        )
 
         // Must not spin the main run loop here — MCP handler already uses the main queue.
         if Thread.isMainThread {
@@ -180,11 +191,16 @@ public final class LKMCPClientDiagnostics {
             var finished = false
         }
 
+        let forceFreshDiscovery = LKConnectionManager.sharedInstance.consumeMCPForceFreshDiscover()
         let waitResult: Result<DiscoverPayload, Error> = LKMCPBlockingWait.onMain(
             timeout: effectiveTimeout
         ) { done in
             _ = LookinRACSignalRx.observeMainThread(
-                LKAppsManager.sharedInstance.fetchAppInfos(withImage: false, localInfos: nil)
+                LKAppsManager.sharedInstance.fetchAppInfos(
+                    withImage: false,
+                    localInfos: nil,
+                    forceFreshDiscovery: forceFreshDiscovery
+                )
             )
             .subscribe(
                 onSuccess: { apps in
@@ -318,6 +334,10 @@ public final class LKMCPClientDiagnostics {
     }
 
     /// Non-intrusive listen check — a TCP `connect` would accept on the demo and tear down Peertalk listen.
+    static func simulatorPortIsListening(_ port: Int) -> Bool {
+        probeTCPPort(UInt16(port)) == "listen"
+    }
+
     private static func probeTCPPort(_ port: UInt16) -> String {
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")

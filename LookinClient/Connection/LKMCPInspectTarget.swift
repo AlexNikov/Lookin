@@ -40,7 +40,7 @@ enum LKMCPInspectTarget {
         let deadline = Date().addingTimeInterval(timeout)
         var targets: [LKMCPLaunchTile] = []
         while Date() < deadline {
-            targets = launchTiles()
+            targets = launchTilesOnMain()
             let usable = LKMCPClientDiagnostics.shared.lastDiscoverSummary["usableAppCount"] as? Int ?? 0
             if targets.count >= 2 || (targets.count >= 1 && usable >= 1) {
                 break
@@ -196,6 +196,20 @@ enum LKMCPInspectTarget {
     }
 
     // MARK: - Private
+
+    private static func launchTilesOnMain() -> [LKMCPLaunchTile] {
+        if Thread.isMainThread {
+            return launchTiles()
+        }
+        var result: [LKMCPLaunchTile] = []
+        let sem = DispatchSemaphore(value: 0)
+        DispatchQueue.main.async {
+            result = launchTiles()
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + LKMCPTiming.mainQueueHop)
+        return result
+    }
 
     private static func launchTiles() -> [LKMCPLaunchTile] {
         var entries: [(view: LKLaunchAppView, channel: LKMCPChannelTag)] = []

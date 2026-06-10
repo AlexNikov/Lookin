@@ -5,7 +5,7 @@ import RxSwift
 public final class LKInspectableApp: NSObject {
     public var serverVersionError: NSError?
     public var appInfo: LookinAppInfo?
-    public weak var channel: LookinPTChannel?
+    public weak var channel: LKPeerChannel?
     /// Launch screen placeholder while a USB iPhone is plugged in but no demo is listening yet.
     public var isLaunchUSBPendingPlaceholder = false
     public var pendingUSBDeviceID: NSNumber?

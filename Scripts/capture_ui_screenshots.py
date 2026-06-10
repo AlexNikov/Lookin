@@ -7,9 +7,14 @@ import base64
 import json
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
+from typing import Optional
+
+SCREENSHOT_TIMEOUT_SEC = 30
+SCREENSHOT_RETRIES = 2
 
 # Reuse tree normalization from hierarchy compare.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -88,22 +93,30 @@ def walk_capture(
             safe = re.sub(r"[^A-Za-z0-9._-]+", "_", path)[:180]
             fname = f"{safe}.png"
             url = f"http://127.0.0.1:{port}/ui/view/{oid}/screenshot"
-            try:
-                with urllib.request.urlopen(url, timeout=15) as resp:
-                    doc = json.load(resp)
-                b64 = doc.get("data", {}).get("imageBase64") or doc.get("imageBase64")
-                if b64:
-                    out_dir.mkdir(parents=True, exist_ok=True)
-                    png = base64.b64decode(b64)
-                    (out_dir / fname).write_bytes(png)
-                    manifest[path] = {
-                        "file": fname,
-                        "oid": oid,
-                        "className": node.get("className"),
-                        "frame": node.get("frame"),
-                    }
-            except (urllib.error.URLError, json.JSONDecodeError, KeyError) as e:
-                manifest[path] = {"error": str(e), "oid": oid}
+            last_err: Optional[Exception] = None
+            for attempt in range(SCREENSHOT_RETRIES + 1):
+                try:
+                    with urllib.request.urlopen(url, timeout=SCREENSHOT_TIMEOUT_SEC) as resp:
+                        doc = json.load(resp)
+                    b64 = doc.get("data", {}).get("imageBase64") or doc.get("imageBase64")
+                    if b64:
+                        out_dir.mkdir(parents=True, exist_ok=True)
+                        png = base64.b64decode(b64)
+                        (out_dir / fname).write_bytes(png)
+                        manifest[path] = {
+                            "file": fname,
+                            "oid": oid,
+                            "className": node.get("className"),
+                            "frame": node.get("frame"),
+                        }
+                    last_err = None
+                    break
+                except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError) as e:
+                    last_err = e
+                    if attempt < SCREENSHOT_RETRIES:
+                        time.sleep(1.5 * (attempt + 1))
+            if last_err is not None:
+                manifest[path] = {"error": str(last_err), "oid": oid}
 
     for child in node.get("children", []):
         walk_capture(child, path, port, out_dir, manifest, hierarchy_row_count)

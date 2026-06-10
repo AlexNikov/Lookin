@@ -183,10 +183,12 @@ lookin_click_lookin_launch_tile() {
   if [[ -n "$sim_name" && "$sim_name" != "$display_name" ]]; then
     names_csv="${names_csv},${sim_name}"
   fi
+  if declare -F lookin_activate_mac_client >/dev/null 2>&1; then
+    lookin_activate_mac_client "${LOOKIN_APP:-}"
+  fi
   osascript - "$names_csv" <<'APPLESCRIPT' 2>/dev/null || true
 on run argv
   set nameList to text items of (item 1 of argv) using ","
-  tell application "Lookin" to activate
   delay 1
   tell application "System Events"
     if not (exists process "Lookin") then return

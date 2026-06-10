@@ -34,6 +34,7 @@ final class LKStaticWindowController: LKWindowController, NSToolbarDelegate {
     var mcpFetchingHierarchy: Bool { isFetchingHierarchy }
 
     let disposeBag = DisposeBag()
+    private var reloadHierarchyDisposable: Disposable?
 
     deinit {
         if let token = inspectingAppEndToken {
@@ -236,7 +237,6 @@ final class LKStaticWindowController: LKWindowController, NSToolbarDelegate {
 
     @objc func handleReload() {
         if isFetchingDetails {
-            // Stop fetching
             LKStaticAsyncUpdateManager.sharedInstance.endUpdating()
             resetDetailFetchingToolbarState()
         }
@@ -246,29 +246,43 @@ final class LKStaticWindowController: LKWindowController, NSToolbarDelegate {
             return
         }
 
-        if isFetchingHierarchy { return }
+        cancelInFlightHierarchyReload(on: app.channel)
 
         LKStaticAsyncUpdateManager.sharedInstance.endUpdating()
         isFetchingHierarchy = true
         viewController.progressView.animate(toProgress: InitialIndicatorProgressWhenFetchHierarchy)
         LKPerformanceReporter.sharedInstance.willStartReload()
 
-        // Prefer live Peertalk; if iOS recycled the peer (watchdog / Mac quit), reattach without
-        // forceFreshDiscovery — full rediscovery breaks USB on physical devices.
-        LookinRACSignalRx.observeMainThread(
+        reloadHierarchyDisposable?.dispose()
+        reloadHierarchyDisposable = LookinRACSignalRx.observeMainThread(
             LKAppsManager.sharedInstance.fetchHierarchyDataForReload(from: app)
         )
-            .subscribe(with: self, onSuccess: { owner, info in
-                owner.viewController.progressView.finish(completion: nil)
-                LKStaticHierarchyDataSource.sharedInstance.reload(with: info, keepState: true)
-                owner.isFetchingHierarchy = false
-                LKPerformanceReporter.sharedInstance.didFetchHierarchy()
-            }, onFailure: { owner, error in
+        .do(onDispose: { [weak self] in
+            self?.isFetchingHierarchy = false
+        })
+        .subscribe(with: self, onSuccess: { owner, info in
+            owner.viewController.progressView.finish(completion: nil)
+            LKStaticHierarchyDataSource.sharedInstance.reload(with: info, keepState: true)
+            owner.isFetchingHierarchy = false
+            LKPerformanceReporter.sharedInstance.didFetchHierarchy()
+        }, onFailure: { owner, error in
+            let nsError = error as NSError
+            if nsError.code != LKLookinClientErrors.discard().code {
                 owner.viewController.progressView.resetToZero()
-                owner.isFetchingHierarchy = false
-                AlertError(error as NSError, owner.window)
-            })
-            .disposed(by: disposeBag)
+                AlertError(nsError, owner.window)
+            } else {
+                owner.viewController.progressView.resetToZero()
+            }
+            owner.isFetchingHierarchy = false
+        })
+    }
+
+    private func cancelInFlightHierarchyReload(on channel: LKPeerChannel?) {
+        guard let channel else { return }
+        let conn = LKConnectionManager.sharedInstance
+        conn.cancelRequest(withType: UInt32(LookinRequestTypeHierarchyDetails), channel: channel)
+        conn.cancelRequest(withType: UInt32(LookinRequestTypeHierarchy), channel: channel, notifyDiscard: true)
+        conn.cancelRequest(withType: UInt32(LookinRequestTypePing), channel: channel, notifyDiscard: true)
     }
 
     @objc private func handleApp() {

@@ -25,6 +25,8 @@ HIER_PY="$ROOT/Lookin/Scripts/mcp_ui_helpers.py"
 source "$ROOT/Lookin/Scripts/lookin_dismiss_dialogs.sh"
 # shellcheck source=lookin_verify_ios_demo.sh
 source "$ROOT/Lookin/Scripts/lookin_verify_ios_demo.sh"
+# shellcheck source=lookin_verify_mcp_helpers.sh
+source "$ROOT/Lookin/Scripts/lookin_verify_mcp_helpers.sh"
 
 SKIP_OBJC_BASELINE="${SKIP_OBJC_BASELINE:-1}"
 PREVIEW_WAIT_SEC="${PREVIEW_WAIT_SEC:-90}"
@@ -117,22 +119,48 @@ open_inspector_if_needed() {
   lookin_click_lookin_launch_tile "LookinMCPSample"
 }
 
+wait_for_mcp_sample_hierarchy() {
+  local port="$1"
+  local max_wait="${2:-90}"
+  local i
+  for ((i=1; i<=max_wait; i++)); do
+    dismiss_lookin_system_dialogs
+    if lookin_mcp_client_has_subtitle "$port" "SampleViewController.view"; then
+      return 0
+    fi
+    if (( i == 1 || i % 8 == 0 )); then
+      open_inspector_if_needed "$port" "${LOOKIN_VERIFY_LOG_DIR:-/tmp}/preview-ui-state.json"
+      lookin_ensure_mcp_sample_inspector "$port" || true
+    fi
+    sleep 1
+  done
+  return 1
+}
+
 wait_for_preview_ready() {
   local port="$1" state_file="$2" max_wait="${3:-120}"
   local i
   for ((i=1; i<=max_wait; i++)); do
     dismiss_lookin_system_dialogs
-    if (( i == 1 || i % 10 == 0 )); then
-      open_inspector_if_needed "$port" "${state_file%.json}-ui.json"
-    fi
     local cs
     cs="$(curl -sf --max-time 10 "http://127.0.0.1:${port}/ui/client-state" 2>/dev/null || echo '{}')"
     local fetching nodes preview_ep
     fetching="$(echo "$cs" | python3 -c "import json,sys; print(json.load(sys.stdin).get('data',{}).get('isFetchingDetails',True))" 2>/dev/null || echo True)"
     nodes="$(echo "$cs" | python3 -c "import json,sys; d=json.load(sys.stdin).get('data',{}); print((d.get('preview') or {}).get('displayItemNodesCount',0))" 2>/dev/null || echo 0)"
-    preview_ep="$(curl -sf --max-time 2 -o /dev/null -w '%{http_code}' "http://127.0.0.1:${port}/ui/preview/state" 2>/dev/null || echo 000)"
+    if (( i == 1 || i % 8 == 0 )); then
+      open_inspector_if_needed "$port" "${state_file%.json}-ui.json"
+      if [[ "${nodes:-0}" -eq 0 ]] || [[ -f "$PREVIEW_GOLDEN" && "$port" == "47192" ]]; then
+        lookin_ensure_mcp_sample_inspector "$port" || true
+      fi
+    fi
+    preview_ep="$(curl -s --max-time 2 -o /dev/null -w '%{http_code}' "http://127.0.0.1:${port}/ui/preview/state" 2>/dev/null || true)"
+    preview_ep="${preview_ep:-000}"
     echo "  preview poll ${i}/${max_wait}s: fetching=${fetching} nodes=${nodes} preview_http=${preview_ep}"
     if [[ "$preview_ep" == "200" && "$fetching" == "False" && "${nodes:-0}" -gt 0 ]]; then
+      if [[ -f "$PREVIEW_GOLDEN" && "$port" == "47192" && "${nodes:-0}" -gt 15 ]]; then
+        lookin_ensure_mcp_sample_root_view "$port" || true
+        sleep 1
+      fi
       return 0
     fi
     sleep 1
@@ -146,6 +174,9 @@ capture_preview_client() {
   [[ "$port" == "47191" ]] && ios_flavor=baseline
 
   section "Capture preview $label (port $port)"
+  lookin_terminate_all_ios_demos "$SIM_UDID"
+  lookin_uninstall_collection_layout_demos "$SIM_UDID"
+  xcrun simctl terminate "$SIM_UDID" "$DEMO_BUNDLE_ID" 2>/dev/null || true
   lookin_install_ios_demo "$SIM_UDID" mcp_sample "$ios_flavor" \
     || fail "Install LookinMCPSample ($ios_flavor) failed"
   sleep 5
@@ -157,21 +188,31 @@ capture_preview_client() {
   "$app_path/Contents/MacOS/Lookin" >/dev/null 2>&1 &
   sleep 2
   dismiss_lookin_system_dialogs
-  osascript -e 'tell application "Lookin" to activate' 2>/dev/null || true
+  export LOOKIN_APP="$app_path"
+  lookin_activate_mac_client "$app_path"
   wait_mcp_port "$port" || {
     dismiss_lookin_dialogs_watch_stop "$dismiss_pid"
     fail "MCP port $port not ready"
   }
   sleep 2
   lookin_click_lookin_launch_tile "LookinMCPSample"
-  echo "Waiting ${PREVIEW_WAIT_SEC}s for iOS connection..."
-  sleep "$PREVIEW_WAIT_SEC"
+  lookin_ensure_mcp_sample_inspector "$port" || true
+  if ! wait_for_mcp_sample_hierarchy "$port" 90; then
+    dismiss_lookin_dialogs_watch_stop "$dismiss_pid"
+    fail "MCPSample hierarchy not ready on port $port ($label)"
+  fi
+  sleep 5
 
   local state_file="$out_dir/preview_state-$STAMP.json"
   local shot_file="$out_dir/preview_screenshot-$STAMP.json"
   if ! wait_for_preview_ready "$port" "$state_file" 120; then
     dismiss_lookin_dialogs_watch_stop "$dismiss_pid"
     fail "Preview not ready on port $port ($label)"
+  fi
+
+  if [[ -f "$PREVIEW_GOLDEN" && "$port" == "47192" ]]; then
+    lookin_ensure_mcp_sample_root_view "$port" || true
+    sleep 1
   fi
 
   curl -sf --max-time 30 "http://127.0.0.1:${port}/ui/preview/state" -o "$state_file" \

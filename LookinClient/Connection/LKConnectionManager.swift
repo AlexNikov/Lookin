@@ -3,22 +3,15 @@ import LookinShared
 import RxRelay
 import RxSwift
 
-private let activeRequestsBindKey = "activeRequest"
-
-extension LookinPTChannel {
-    var lk_activeRequests: NSMutableSet? {
-        get { lookin_getBindObject(forKey: activeRequestsBindKey) as? NSMutableSet }
-        set { lookin_bindObject(newValue, forKey: activeRequestsBindKey) }
-    }
-}
-
-public final class LKConnectionManager: NSObject, Lookin_PTChannelDelegate {
+public final class LKConnectionManager: NSObject {
     public static let sharedInstance = LKConnectionManager()
 
-    private let channelWillEndRelay = PublishRelay<LookinPTChannel>()
-    public var channelWillEnd: Observable<LookinPTChannel> {
+    private let channelWillEndRelay = PublishRelay<LKPeerChannel>()
+    public var channelWillEnd: Observable<LKPeerChannel> {
         channelWillEndRelay.asObservable()
     }
+
+    var peerActiveRequests: [ObjectIdentifier: NSMutableSet] = [:]
 
     private let didReceivePushRelay = PublishRelay<LookinTriple>()
     public var didReceivePush: Observable<LookinTriple> {
@@ -58,7 +51,7 @@ public final class LKConnectionManager: NSObject, Lookin_PTChannelDelegate {
         port >= Int(LookinSimulatorIPv4PortNumberStart) && port <= Int(LookinSimulatorIPv4PortNumberEnd)
     }
 
-    public func channelUsesUSB(_ channel: LookinPTChannel?) -> Bool {
+    public func channelUsesUSB(_ channel: LKPeerChannel?) -> Bool {
         guard let channel else { return false }
         return isUSBPeertalkPort(channel.targetPort)
     }
@@ -70,6 +63,15 @@ public final class LKConnectionManager: NSObject, Lookin_PTChannelDelegate {
     }
 
     public internal(set) var mcpLastConnectSnapshot: LKMCPConnectSnapshot?
+
+    /// MCP verify: one-shot `forceFreshDiscovery` on the next `discover-apps` (set via `LOOKIN_FORCE_DISCOVER_ONCE=1` on launch).
+    var mcpForceFreshDiscoverOnNextFetch = ProcessInfo.processInfo.environment["LOOKIN_FORCE_DISCOVER_ONCE"] == "1"
+
+    func consumeMCPForceFreshDiscover() -> Bool {
+        guard mcpForceFreshDiscoverOnNextFetch else { return false }
+        mcpForceFreshDiscoverOnNextFetch = false
+        return true
+    }
 
     public func clearMCPSessionSnapshots() {
         mcpLastConnectSnapshot = nil
@@ -106,14 +108,13 @@ public final class LKConnectionManager: NSObject, Lookin_PTChannelDelegate {
         LKServerVersionRequestor.shared.preload()
     }
 
-    // MARK: - Lookin_PTChannelDelegate
-
-    public func ioFrameChannel(
-        _ channel: LookinPTChannel,
-        shouldAcceptFrameOfType type: UInt32,
+    func shouldAcceptPeerFrame(
+        channel: LKPeerChannel,
+        type: UInt32,
         tag: UInt32,
         payloadSize: UInt32
     ) -> Bool {
+        _ = payloadSize
         if Self.pushFrameTypes.contains(Int(type)) {
             return true
         }
@@ -122,7 +123,7 @@ public final class LKConnectionManager: NSObject, Lookin_PTChannelDelegate {
             return true
         }
 
-        if LKConnectionManager.lk_activeRequest(on: channel, frameType: type, tag: tag) != nil {
+        if Self.lk_activeRequest(on: channel, frameType: type, tag: tag) != nil {
             return true
         }
 
@@ -130,14 +131,14 @@ public final class LKConnectionManager: NSObject, Lookin_PTChannelDelegate {
         return false
     }
 
-    public func ioFrameChannel(
-        _ channel: LookinPTChannel,
-        didReceiveFrameOfType type: UInt32,
+    func deliverIncomingPeerFrame(
+        channel: LKPeerChannel,
+        type: UInt32,
         tag: UInt32,
-        payload: LookinPTData?
+        payload: Data?
     ) {
         if Self.pushFrameTypes.contains(Int(type)) {
-            let data = payload?.lookinPayloadBytes() ?? Data()
+            let data = payload ?? Data()
             guard !data.isEmpty else { return }
             guard let pushEnvelope = try? LKWireCodecV2.decodeJSON(WirePushEnvelope.self, from: data) else {
                 NSLog("LookinWireV2 - push JSON decode failed type:%u", type)
@@ -156,7 +157,7 @@ public final class LKConnectionManager: NSObject, Lookin_PTChannelDelegate {
             return
         }
 
-        let data = payload?.lookinPayloadBytes() ?? Data()
+        let data = payload ?? Data()
         guard !data.isEmpty else {
             return
         }
@@ -177,7 +178,7 @@ public final class LKConnectionManager: NSObject, Lookin_PTChannelDelegate {
             if let activeRequest {
                 NSLog("LookinWireV2 - wire v2 frame decode failed type:%u tag:%u", type, tag)
                 activeRequest.endTimeoutCount()
-                channel.lk_activeRequests?.remove(activeRequest)
+                removeActiveRequest(activeRequest, from: channel)
                 activeRequest.failBlock?(LKLookinClientErrors.inner)
             }
             return
@@ -186,18 +187,20 @@ public final class LKConnectionManager: NSObject, Lookin_PTChannelDelegate {
         if let activeRequest {
             NSLog("LookinWireV2 - legacy NSCoding response rejected type:%u tag:%u", type, tag)
             activeRequest.endTimeoutCount()
-            channel.lk_activeRequests?.remove(activeRequest)
+            removeActiveRequest(activeRequest, from: channel)
             activeRequest.failBlock?(LKLookinClientErrors.inner)
         }
     }
 
-    public func ioFrameChannel(_ channel: LookinPTChannel, didEndWithError error: NSError?) {
+    func peerChannelDidEnd(_ channel: LKPeerChannel?, error: NSError?) {
+        guard let channel else { return }
         for port in allSimulatorPorts where port.connectedChannel === channel {
             port.connectedChannel = nil
         }
         for port in allUSBPorts where port.connectedChannel === channel {
             port.connectedChannel = nil
         }
+        clearActiveRequests(for: channel)
         channelWillEndRelay.accept(channel)
         channel.close()
         _ = error

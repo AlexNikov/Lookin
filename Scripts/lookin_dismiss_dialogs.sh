@@ -12,14 +12,22 @@ _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$_SCRIPT_DIR/lookin_demo_bundle_ids.env"
 
 lookin_free_ios_mcp_port_47190() {
-  local pids
+  local pids pid comm
   pids="$(lsof -ti tcp:47190 2>/dev/null || true)"
-  if [[ -n "$pids" ]]; then
-    echo "  terminating stale listeners on :47190 ($pids)" >&2
-    # shellcheck disable=SC2086
-    kill -9 $pids 2>/dev/null || true
-    sleep 1
+  if [[ -z "$pids" ]]; then
+    return 0
   fi
+  for pid in $pids; do
+    comm="$(ps -p "$pid" -o comm= 2>/dev/null | tr -d ' ' || true)"
+    case "$comm" in
+      LookinCustomInfoDemo|LookinMCPSample|LookinCollectionLayoutDemo*)
+        continue
+        ;;
+    esac
+    echo "  terminating stale listener on :47190 pid=$pid ($comm)" >&2
+    kill -9 "$pid" 2>/dev/null || true
+  done
+  sleep 1
 }
 
 lookin_prepare_mcp_sample_demo() {
@@ -193,8 +201,9 @@ lookin_prepare_custom_info_demo() {
   local sim_udid="$1"
   local demo_app="$2"
   local launch_bundle="${3:-$DEMO_BUNDLE_ID}"
-  lookin_free_ios_mcp_port_47190
   xcrun simctl terminate "$sim_udid" "$MCP_SAMPLE_BUNDLE_ID" 2>/dev/null || true
+  xcrun simctl terminate "$sim_udid" "${COLLECTION_LAYOUT_SWIFT_BUNDLE_ID:-Lookin.LookinCollectionLayoutDemo}" 2>/dev/null || true
+  xcrun simctl terminate "$sim_udid" "${COLLECTION_LAYOUT_OBJC_BUNDLE_ID:-Lookin.LookinCollectionLayoutDemoObjC}" 2>/dev/null || true
   xcrun simctl install "$sim_udid" "$demo_app"
   xcrun simctl terminate "$sim_udid" "$LEGACY_DEMO_BUNDLE_ID" 2>/dev/null || true
   xcrun simctl terminate "$sim_udid" "$DEMO_BUNDLE_ID" 2>/dev/null || true
@@ -206,6 +215,7 @@ lookin_prepare_custom_info_demo() {
   fi
   xcrun simctl uninstall "$sim_udid" "$LEGACY_DEMO_BUNDLE_ID" 2>/dev/null || true
   sleep 1
+  lookin_free_ios_mcp_port_47190
   LOOKIN_LAST_CUSTOM_INFO_BUNDLE="$launch_bundle"
   xcrun simctl launch "$sim_udid" "$launch_bundle"
 }
@@ -216,13 +226,24 @@ lookin_relaunch_custom_info_demo() {
   xcrun simctl terminate "$sim_udid" "$LEGACY_DEMO_BUNDLE_ID" 2>/dev/null || true
   xcrun simctl terminate "$sim_udid" "$DEMO_BUNDLE_ID" 2>/dev/null || true
   xcrun simctl terminate "$sim_udid" "$MCP_SAMPLE_BUNDLE_ID" 2>/dev/null || true
+  xcrun simctl terminate "$sim_udid" "${COLLECTION_LAYOUT_SWIFT_BUNDLE_ID:-Lookin.LookinCollectionLayoutDemo}" 2>/dev/null || true
+  xcrun simctl terminate "$sim_udid" "${COLLECTION_LAYOUT_OBJC_BUNDLE_ID:-Lookin.LookinCollectionLayoutDemoObjC}" 2>/dev/null || true
   sleep 1
   xcrun simctl launch "$sim_udid" "$launch_bundle"
+}
+
+# Activate the verify/refactor Lookin.app (not /Applications/Lookin.app from Launch Services).
+lookin_activate_mac_client() {
+  local app="${1:-${LOOKIN_APP:-}}"
+  if [[ -d "$app" ]]; then
+    open -g -a "$app" 2>/dev/null || true
+  fi
 }
 
 lookin_prepare_clean_launch() {
   local bundle
   bundle="$(lookin_bundle_ids)"
+  pkill -f "/Applications/Lookin.app/Contents/MacOS/Lookin" 2>/dev/null || true
   killall Lookin 2>/dev/null || true
   killall "Problem Reporter" 2>/dev/null || true
   rm -rf "${HOME}/Library/Saved Application State/${bundle}.savedState" 2>/dev/null || true

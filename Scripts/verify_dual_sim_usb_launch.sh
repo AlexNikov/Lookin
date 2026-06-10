@@ -18,6 +18,7 @@ mkdir -p "$OUT_DIR"
 RESULT="$OUT_DIR/RESULT-dual-sim-usb-$STAMP.txt"
 
 DEVICE="${DEVICE_UDID:-00008030-001014891AE1802E}"
+DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-9938T969H4}"
 SIM_UDID="${SIM_UDID:-5794C474-9C3D-4EDA-80BA-8E18C92A50AB}"
 SIM_NAME="${SIM_NAME:-iPhone 17 Pro}"
 PORT="${PORT:-47192}"
@@ -84,6 +85,27 @@ import json, sys
 c = json.load(sys.stdin).get('data', {}).get('client', {})
 print(int(c.get('lastDiscover', {}).get('usableAppCount', 0)))
 " 2>/dev/null || echo 0
+}
+
+wait_usable_discover() {
+  local min_count="${1:-2}"
+  local max_wait="${2:-90}"
+  local i usable
+  echo "  waiting up to ${max_wait}s for usableAppCount>=${min_count}…" | tee -a "$RESULT"
+  for ((i = 1; i <= max_wait; i++)); do
+    usable="$(mcp_discover_usable_count)"
+    if [[ "${usable:-0}" -ge "$min_count" ]]; then
+      echo "  usableAppCount=$usable (ready after ${i}s)" | tee -a "$RESULT"
+      return 0
+    fi
+    if (( i % 12 == 0 )); then
+      mcp_force_discover_usable_count >/dev/null || true
+      refresh_launch_targets 20
+    fi
+    sleep 1
+  done
+  echo "  usableAppCount=${usable:-0} < $min_count after ${max_wait}s" | tee -a "$RESULT"
+  return 1
 }
 
 mcp_force_discover_usable_count() {
@@ -175,10 +197,11 @@ print(f'$label ok port={port}')
 
 select_inspect_target_channel() {
   local channel="$1" resp
+  wait_usable_discover 2 90 || true
   echo "  POST /action/select-inspect-target channel=$channel" | tee -a "$RESULT"
-  resp="$(curl -s --max-time 120 -X POST "http://127.0.0.1:${PORT}/action/select-inspect-target" \
+  resp="$(curl -s --max-time 150 -X POST "http://127.0.0.1:${PORT}/action/select-inspect-target" \
     -H "Content-Type: application/json" \
-    -d "{\"channel\":\"$channel\",\"timeout\":60}" 2>/dev/null || true)"
+    -d "{\"channel\":\"$channel\",\"timeout\":90}" 2>/dev/null || true)"
   if [[ -z "$resp" ]]; then
     echo "  select-inspect-target: empty response (MCP timeout?)" | tee -a "$RESULT"
     return 1
@@ -221,7 +244,7 @@ restart_lookin_on_launch() {
   osascript -e 'tell application "Simulator" to activate' 2>/dev/null || true
   sleep 2
   lookin_prepare_clean_launch
-  open -a "$MAC_APP" --args -ApplePersistenceIgnoreState YES
+  lookin_activate_mac_client "$MAC_APP"
   wait_mcp_port || fail "Lookin MCP :$PORT not ready after restart"
   wait_dual_on_launch || fail "expected 2 apps on launch after restart"
 }
@@ -271,14 +294,13 @@ lookin_kill_if_hung() {
 open_app_switcher_sync() {
   local min_count="${1:-2}"
   local resp count ok
-  # Pre-call liveness check: if MCP is dead, kill Lookin so caller gets a clean failure.
   if ! curl -sf --max-time 5 "http://127.0.0.1:${PORT}/status" >/dev/null 2>&1; then
     echo "  MCP unresponsive before open-app-switcher — killing Lookin" | tee -a "$RESULT"
     killall -9 Lookin 2>/dev/null || true
     return 1
   fi
   echo "  POST /action/open-app-switcher (sync, min_tiles=$min_count)" | tee -a "$RESULT"
-  resp="$(curl -s --max-time 50 -X POST "http://127.0.0.1:${PORT}/action/open-app-switcher" \
+  resp="$(curl -s --max-time 90 -X POST "http://127.0.0.1:${PORT}/action/open-app-switcher" \
     -H "Content-Type: application/json" -d '{}' 2>/dev/null || true)"
   if [[ -z "$resp" ]]; then
     echo "  open-app-switcher: empty response — killing Lookin" | tee -a "$RESULT"
@@ -302,7 +324,19 @@ print('true' if d.get('ok') else 'false')
   if [[ "${count:-0}" -ge "$min_count" ]]; then
     return 0
   fi
-  return 1
+  refresh_launch_targets 25
+  sleep 3
+  echo "  POST /action/open-app-switcher (retry after refresh)" | tee -a "$RESULT"
+  resp="$(curl -s --max-time 90 -X POST "http://127.0.0.1:${PORT}/action/open-app-switcher" \
+    -H "Content-Type: application/json" -d '{}' 2>/dev/null || true)"
+  count="$(echo "$resp" | python3 -c "
+import json, sys
+doc = json.load(sys.stdin)
+d = doc.get('data', doc)
+print(int(d.get('count', 0)))
+" 2>/dev/null || echo 0)"
+  echo "  app-switcher tiles=$count (retry)" | tee -a "$RESULT"
+  [[ "${count:-0}" -ge "$min_count" ]]
 }
 
 section "preflight"
@@ -318,7 +352,8 @@ if [[ "$BUILD_IOS_DEMO" == "1" ]]; then
   xcodebuild -workspace "$DEMO_WS" -scheme LookinCollectionLayoutDemo -configuration Debug \
     -destination "platform=iOS Simulator,id=$SIM_UDID" -derivedDataPath "$DD_SIM" build -quiet
   xcodebuild -workspace "$DEMO_WS" -scheme LookinCollectionLayoutDemo -configuration Debug \
-    -destination "id=$DEVICE" -derivedDataPath "$DD_DEVICE" build -quiet
+    -destination "id=$DEVICE" -derivedDataPath "$DD_DEVICE" \
+    DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" -allowProvisioningUpdates build -quiet
   xcodebuild -workspace "$MAC_WS" -scheme LookinClient -configuration Debug \
     -derivedDataPath "$DD_MAC" build -quiet
 fi
@@ -346,7 +381,7 @@ section "start Lookin on launch screen (no auto-enter)"
 lookin_prepare_clean_launch
 killall Lookin 2>/dev/null || true
 sleep 1
-open -a "$MAC_APP" --args -ApplePersistenceIgnoreState YES
+lookin_activate_mac_client "$MAC_APP"
 wait_mcp_port || fail "Lookin MCP :$PORT not ready"
 
 wait_dual_on_launch || fail "expected 2 apps on launch (sim+USB); see $RESULT"
@@ -375,6 +410,7 @@ curl -sf --max-time 10 "http://127.0.0.1:${PORT}/ui/tap-targets" -o "$tt" \
 pass "launch has $tile_count targets (sim+usb) with channel + a11y ids"
 
 section "enter inspector via simulator tile (index 0)"
+wait_usable_discover 2 120 || fail "Peertalk discover not ready before sim entry"
 tap_open_inspector_tile 0
 wait_inspector_ready "$INSPECTOR_WAIT_SEC" || fail "simulator inspector timeout"
 assert_channel_range "simulator session" "$SIM_PORT_MIN" "$SIM_PORT_MAX" \

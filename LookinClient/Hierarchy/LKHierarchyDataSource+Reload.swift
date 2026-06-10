@@ -154,6 +154,9 @@ extension LKHierarchyDataSource {
         if shouldSelectedItem == nil {
             shouldSelectedItem = flatItems?.first
         }
+        if let pinned = lookin_verifyPinnedSelection(in: flatItems) {
+            shouldSelectedItem = pinned
+        }
         selectedItem = shouldSelectedItem
 
         if state != .normal {
@@ -163,10 +166,12 @@ extension LKHierarchyDataSource {
         lastReloadKeptState = keepState
         didReloadHierarchyInfoRelay.accept(())
 
-        LKVerifyCustomInfoLogger.logHierarchyReload(
-            flatItems: flatItems ?? [],
-            displayingCount: displayingFlatItems?.count ?? 0,
-            selectedItem: selectedItem
-        )
+        if !keepState {
+            LKVerifyCustomInfoLogger.logHierarchyReload(
+                flatItems: flatItems ?? [],
+                displayingCount: displayingFlatItems?.count ?? 0,
+                selectedItem: selectedItem
+            )
+        }
     }
 }

@@ -19,6 +19,7 @@ enum LKMCPBlockingWait {
         let sem = DispatchSemaphore(value: 0)
         var outcome: Result<T, Error>?
         DispatchQueue.main.async {
+            sem.signal()
             work { result in
                 outcome = result
                 sem.signal()

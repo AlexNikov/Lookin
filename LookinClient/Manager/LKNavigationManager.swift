@@ -31,6 +31,7 @@ class LKNavigationManager: NSObject, NSWindowDelegate {
         // End inspect only when leaving the static workspace (avoid killing Peertalk during launch polling).
         if staticWindowController?.window?.isVisible == true {
             LKAppsManager.sharedInstance.endInspectingSession()
+            staticWindowController?.close()
         }
         launchWindowController = LKLaunchWindowController()
         launchWindowController?.showWindow(self)

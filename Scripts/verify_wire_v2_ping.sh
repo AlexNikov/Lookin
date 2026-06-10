@@ -184,13 +184,12 @@ then
   sleep 1
 fi
 
-pkill -x Lookin 2>/dev/null || true
+lookin_prepare_clean_launch
 sleep 1
-open "$REFACTOR_APP"
+lookin_activate_mac_client "$REFACTOR_APP"
 sleep 3
 
 osascript <<'APPLESCRIPT' 2>/dev/null || true
-tell application "Lookin" to activate
 delay 1
 tell application "System Events"
   if not (exists process "Lookin") then return

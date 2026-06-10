@@ -7,7 +7,6 @@ extension LKStaticWindowController {
     // MARK: - LKAppMenuManagerDelegate
 
     func appMenuManagerDidSelectReload() {
-        if isFetchingHierarchy { return }
         if isFetchingDetails {
             let error = LookinErrorMake(
                 NSLocalizedString("Cannot reload at this time", comment: ""),

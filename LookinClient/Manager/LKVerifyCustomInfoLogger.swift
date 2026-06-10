@@ -3,6 +3,7 @@
 //  LookinClient
 //
 
+import AppKit
 import Foundation
 import LookinShared
 
@@ -22,11 +23,73 @@ enum LKVerifyCustomInfoLogger {
 
     private static func valueSummary(for attr: LookinAttribute) -> String {
         guard let value = attr.value else { return "nil" }
-        var desc = "\(value)"
+        let desc = verifyLogDescription(for: value)
         if desc.count > 120 {
-            desc = String(desc.prefix(120)) + "…"
+            return String(desc.prefix(120)) + "…"
         }
         return desc
+    }
+
+    /// ObjC `description` parity for `verify_custom_info_client` golden diff.
+    private static func verifyLogDescription(for value: AttributeValue) -> String {
+        switch value {
+        case .char(let v): return "\(v)"
+        case .int(let v): return "\(v)"
+        case .short(let v): return "\(v)"
+        case .long(let v): return "\(v)"
+        case .longLong(let v): return "\(v)"
+        case .unsignedChar(let v): return "\(v)"
+        case .unsignedInt(let v): return "\(v)"
+        case .unsignedShort(let v): return "\(v)"
+        case .unsignedLong(let v): return "\(v)"
+        case .unsignedLongLong(let v): return "\(v)"
+        case .float(let v): return "\(v)"
+        case .double(let v): return "\(v)"
+        case .bool(let v): return v ? "1" : "0"
+        case .selector(let v): return NSStringFromSelector(v)
+        case .classRef(let v): return v.map { NSStringFromClass($0) } ?? "nil"
+        case .cgPoint(let p):
+            return "NSPoint: {\(verifyFormatNumber(p.x)), \(verifyFormatNumber(p.y))}"
+        case .cgVector(let v):
+            return "NSPoint: {\(verifyFormatNumber(v.dx)), \(verifyFormatNumber(v.dy))}"
+        case .cgSize(let s):
+            return "NSSize: {\(verifyFormatNumber(s.width)), \(verifyFormatNumber(s.height))}"
+        case .cgRect(let r):
+            return "NSRect: {{\(verifyFormatNumber(r.origin.x)), \(verifyFormatNumber(r.origin.y))}, {\(verifyFormatNumber(r.size.width)), \(verifyFormatNumber(r.size.height))}}"
+        case .cgAffineTransform(let t):
+            return "\(t)"
+        case .edgeInsets(let insets):
+            return "UIEdgeInsets: {\(verifyFormatNumber(insets.top)), \(verifyFormatNumber(insets.left)), \(verifyFormatNumber(insets.bottom)), \(verifyFormatNumber(insets.right))}"
+        case .offset(let x, let y):
+            return "NSPoint: {\(verifyFormatNumber(x)), \(verifyFormatNumber(y))}"
+        case .string(let s): return s
+        case .color(let rgba):
+            return "(\(rgba.map { verifyFormatNumber($0) }.joined(separator: ", ")))"
+        case .shadow(let shadow):
+            return "\(shadow)"
+        case .json(let s): return s
+        case .customObject(let obj):
+            if let obj { return String(describing: obj) }
+            return "nil"
+        }
+    }
+
+    private static func verifyFormatNumber(_ value: CGFloat) -> String {
+        if value.rounded() == value, abs(value) < 1e15 {
+            return String(format: "%.0f", value)
+        }
+        return String(describing: value)
+    }
+
+    private static func verifyFormatNumber(_ value: Double) -> String {
+        if value.rounded() == value, abs(value) < 1e15 {
+            return String(format: "%.0f", value)
+        }
+        return String(describing: value)
+    }
+
+    private static func verifyFormatNumber(_ value: Float) -> String {
+        verifyFormatNumber(Double(value))
     }
 
     static func logHierarchyReload(

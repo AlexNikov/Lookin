@@ -14,7 +14,7 @@ extension LKConnectionManager {
 
     // MARK: - Request
 
-    public func push(withType pushType: UInt32, data: NSObject?, channel: LookinPTChannel?) {
+    public func push(withType pushType: UInt32, data: NSObject?, channel: LKPeerChannel?) {
         guard let channel, channel.isConnected else { return }
 
         do {
@@ -34,7 +34,7 @@ extension LKConnectionManager {
     public func request(
         withType requestType: UInt32,
         data requestData: NSObject?,
-        channel: LookinPTChannel?,
+        channel: LKPeerChannel?,
         wirePayload: WireClientRequestPayload? = nil
     ) -> Observable<LookinPair> {
         Observable.create { observer in
@@ -81,14 +81,14 @@ extension LKConnectionManager {
         }
     }
 
-    public func cancelRequest(withType requestType: UInt32, channel: LookinPTChannel?) {
+    public func cancelRequest(withType requestType: UInt32, channel: LKPeerChannel?) {
         cancelRequest(withType: requestType, channel: channel, notifyDiscard: false)
     }
 
-    public func cancelRequest(withType requestType: UInt32, channel: LookinPTChannel?, notifyDiscard: Bool) {
+    public func cancelRequest(withType requestType: UInt32, channel: LKPeerChannel?, notifyDiscard: Bool) {
         guard let channel else { return }
         guard
-            let activeRequest = channel.lk_activeRequests?.lookin_firstFiltered({ obj in
+            let activeRequest = activeRequestSet(for: channel)?.lookin_firstFiltered({ obj in
                 guard let request = obj as? LKConnectionRequest else { return false }
                 return request.type == requestType
             }) as? LKConnectionRequest
@@ -97,7 +97,7 @@ extension LKConnectionManager {
         }
 
         activeRequest.endTimeoutCount()
-        channel.lk_activeRequests?.remove(activeRequest)
+        removeActiveRequest(activeRequest, from: channel)
         if notifyDiscard, let failBlock = activeRequest.failBlock {
             failBlock(LKLookinClientErrors.discard())
         }
@@ -121,7 +121,7 @@ extension LKConnectionManager {
 
     private func request(
         withType requestType: UInt32,
-        channel: LookinPTChannel?,
+        channel: LKPeerChannel?,
         data: NSObject?,
         wirePayload: WireClientRequestPayload? = nil,
         timeoutInterval: TimeInterval,
@@ -139,14 +139,14 @@ extension LKConnectionManager {
             return
         }
 
-        if let activeRequests = channel.lk_activeRequests, activeRequests.count > 0, requestType != UInt32(LookinRequestTypePing) {
+        if let activeRequests = activeRequestSet(for: channel), activeRequests.count > 0, requestType != UInt32(LookinRequestTypePing) {
             let requestsToDiscard = activeRequests.lookin_filter { obj in
                 guard let request = obj as? LKConnectionRequest else { return false }
                 return request.type == requestType
             }
             for case let request as LKConnectionRequest in requestsToDiscard {
                 request.endTimeoutCount()
-                channel.lk_activeRequests?.remove(request)
+                removeActiveRequest(request, from: channel)
                 request.failBlock?(LKLookinClientErrors.discard())
                 NSLog("LookinClient - will discard request, type:%@, tag:%@", NSNumber(value: request.type), NSNumber(value: request.tag))
             }
@@ -168,7 +168,7 @@ extension LKConnectionManager {
             if let failBlock = selfRequest.failBlock {
                 failBlock(LKLookinClientErrors.timeout())
             }
-            channel.lk_activeRequests?.remove(selfRequest)
+            self.removeActiveRequest(selfRequest, from: channel)
         }
 
         do {
@@ -182,13 +182,11 @@ extension LKConnectionManager {
             let frameType = requestType
             let payload = (jsonData as NSData).createReferencingDispatchData()
             // Register before send — loopback wire v2 responses can arrive before sendFrame's callback.
-            if channel.lk_activeRequests == nil {
-                channel.lk_activeRequests = NSMutableSet()
-            }
-            channel.lk_activeRequests?.add(request)
+            let activeRequests = ensureActiveRequestSet(for: channel)
+            activeRequests.add(request)
             channel.sendFrame(ofType: frameType, tag: request.tag, withPayload: payload) { error in
                 if let error {
-                    channel.lk_activeRequests?.remove(request)
+                    self.removeActiveRequest(request, from: channel)
                     failBlock?(LKLookinClientErrors.peerTalk())
                     _ = error
                 } else {

@@ -78,10 +78,14 @@ xcodebuild -workspace Lookin.xcworkspace -scheme LookinClient \
   build-for-testing -quiet \
   2>&1 | tee "$RESULT_DIR/build-for-testing.log"
 
-section "4. Clean Lookin saved state"
+section "4. Clean Lookin saved state (foreground launch for XCUITest)"
 lookin_prepare_clean_launch
-killall Lookin 2>/dev/null || true
-sleep 1
+launchctl unsetenv LOOKIN_VERIFY 2>/dev/null || true
+pkill -9 -f "DerivedData-LookinRefactor.*/Lookin.app/Contents/MacOS/Lookin" 2>/dev/null || true
+pkill -9 -f "/Applications/Lookin.app/Contents/MacOS/Lookin" 2>/dev/null || true
+killall -9 Lookin 2>/dev/null || true
+killall -9 "Problem Reporter" 2>/dev/null || true
+sleep 2
 
 section "5. Run UI tests"
 set +e

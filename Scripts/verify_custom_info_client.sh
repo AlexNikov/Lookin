@@ -10,6 +10,8 @@ mkdir -p "$LOG_DIR"
 source "$ROOT/Lookin/Scripts/lookin_dismiss_dialogs.sh"
 # shellcheck source=lookin_verify_ios_demo.sh
 source "$ROOT/Lookin/Scripts/lookin_verify_ios_demo.sh"
+# shellcheck source=lookin_verify_mcp_helpers.sh
+source "$ROOT/Lookin/Scripts/lookin_verify_mcp_helpers.sh"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 MAIN_LOG="$LOG_DIR/custominfo-client-$STAMP.log"
 DIFF_LOG=""
@@ -64,20 +66,7 @@ ui_tap_oid() {
 find_oid_in_client_state() {
   local port="$1"
   local needle="$2"
-  curl -sf --max-time 10 "http://127.0.0.1:${port}/ui/client-state" 2>/dev/null \
-    | python3 - "$needle" <<'PY' 2>/dev/null || true
-import json, sys
-needle = (sys.argv[1] or "").lower()
-d = json.load(sys.stdin).get("data") or {}
-items = d.get("items") or []
-for it in items:
-  title = (it.get("title") or "").lower()
-  subtitle = (it.get("subtitle") or "").lower()
-  if needle and (needle in title or needle in subtitle):
-    print(int(it.get("oid") or 0))
-    sys.exit(0)
-sys.exit(1)
-PY
+  lookin_mcp_find_oid_in_client_state "$port" "$needle"
 }
 
 SIM_NAME="${SIM_NAME:-iPhone 17 Pro}"
@@ -132,6 +121,11 @@ capture_lookin_verify() {
   local ios_flavor="${6:-swift}"
 
   section "Capture $label (MCP $port, iOS $ios_flavor LookinCustomInfoDemo, ${wait_sec}s)"
+  killall Lookin 2>/dev/null || true
+  sleep 1
+  lookin_terminate_all_ios_demos "$SIM_UDID"
+  lookin_uninstall_collection_layout_demos "$SIM_UDID"
+  xcrun simctl terminate "$SIM_UDID" "$MCP_SAMPLE_BUNDLE_ID" 2>/dev/null || true
   lookin_install_ios_demo "$SIM_UDID" custom_info "$ios_flavor" \
     || fail "Install LookinCustomInfoDemo ($ios_flavor) failed"
   sleep 5
@@ -148,7 +142,7 @@ capture_lookin_verify() {
   LOOKIN_VERIFY_LOG="$out_file" "$exe" >/dev/null 2>&1 &
   sleep 2
   dismiss_lookin_system_dialogs
-  osascript -e 'tell application "Lookin" to activate' 2>/dev/null || true
+  lookin_activate_mac_client "$app_path"
 
   wait_mcp_port "$port" || {
     dismiss_lookin_dialogs_watch_stop "$dismiss_pid"
@@ -169,6 +163,7 @@ capture_lookin_verify() {
         lookin_click_lookin_launch_tile "LookinCustomInfoDemo"
       fi
       mcp_open_inspector "$port"
+      lookin_ensure_custom_info_inspector "$port" "$DEMO_BUNDLE_ID" || true
       curl -sf --max-time 10 -X POST "http://127.0.0.1:${port}/action/reload" -d '{}' >/dev/null 2>&1 || true
     fi
 
@@ -207,7 +202,13 @@ capture_lookin_verify() {
       have_lines=1
     fi
     echo "  poll $i/${wait_sec}s: connected=${connected} uiMode=${mode} flat=${flat} hasLines=${have_lines}"
-    if [[ "${connected:-0}" == "1" && "${flat:-0}" -ge 18 && "$mode" == "inspector" && "$have_lines" == "1" ]]; then
+    local demo_ok=0
+    if lookin_mcp_client_has_subtitle "$port" "BirdView" || lookin_mcp_client_has_subtitle "$port" "DogLayer"; then
+      demo_ok=1
+    elif lookin_assert_inspecting_bundle "$port" "$DEMO_BUNDLE_ID"; then
+      demo_ok=1
+    fi
+    if [[ "${connected:-0}" == "1" && "${flat:-0}" -ge 18 && "$demo_ok" == "1" && "$mode" == "inspector" && "$have_lines" == "1" ]]; then
       break
     fi
     sleep 1
@@ -249,7 +250,7 @@ if [[ "$SKIP_OBJC_BASELINE" != "1" ]]; then
 else
   : > "$BASELINE_LOG"
 fi
-capture_lookin_verify "refactored Lookin.app" "$REFACTOR_APP" 47192 "$REFACTOR_LOG" 50 swift
+capture_lookin_verify "refactored Lookin.app" "$REFACTOR_APP" 47192 "$REFACTOR_LOG" 90 swift
 
 section "4. Compare normalized LookinVerify lines"
 BASELINE_LINES="$(wc -l < "$BASELINE_LOG" | tr -d ' ')"

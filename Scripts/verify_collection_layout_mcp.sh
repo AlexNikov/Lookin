@@ -174,7 +174,8 @@ capture_flavor() {
   "$mac_app/Contents/MacOS/Lookin" >/dev/null 2>&1 &
   sleep 2
   dismiss_lookin_system_dialogs
-  osascript -e 'tell application "Lookin" to activate' 2>/dev/null || true
+  export LOOKIN_APP="$mac_app"
+  lookin_activate_mac_client "$mac_app"
   wait_mcp_port "$port" || {
     dismiss_lookin_dialogs_watch_stop "$dismiss_pid"
     fail "MCP :$port not ready ($label)"

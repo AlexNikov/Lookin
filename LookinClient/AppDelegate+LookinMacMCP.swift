@@ -38,8 +38,11 @@ extension AppDelegate: LookinMacMCPDataSource {
             if nav.staticWindowController?.window?.isVisible == true {
                 if LKStaticHierarchyDataSource.sharedInstance.rawHierarchyInfo != nil {
                     nav.staticWindowController?.mcpForceReload()
+                    return
                 }
-                return
+                // Empty inspector (MCP reconnect) — return to launch and enter a live app.
+                LKAppsManager.sharedInstance.endInspectingSession()
+                nav.showLaunch()
             }
             if LKStaticHierarchyDataSource.sharedInstance.rawHierarchyInfo != nil {
                 nav.showStaticWorkspace()
@@ -121,7 +124,6 @@ extension AppDelegate: LookinMacMCPDataSource {
 
     func mcpEndInspectSession() {
         LKAppsManager.sharedInstance.endInspectingSession()
-        LKConnectionManager.sharedInstance.releaseAllDiscoveryChannels()
         LKNavigationManager.sharedInstance.showLaunch()
         LookinDiagLog.log("client MCP end-inspect-session")
     }

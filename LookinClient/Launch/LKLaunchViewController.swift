@@ -23,6 +23,7 @@ class LKLaunchViewController: LKBaseViewController {
     private var appInfos: [LookinAppInfo] = []
     private var appDiscoveryTimer: DispatchSourceTimer?
     private var appDiscoveryPollCount = 0
+    private var appDiscoveryFetchDisposable: Disposable?
     private static let appDiscoveryMaxPolls = 45
 
     private let appViewInterSpace: CGFloat = 10
@@ -118,6 +119,12 @@ class LKLaunchViewController: LKBaseViewController {
     /// MCP select/refresh: pause background discover polling to avoid fetchAppInfos lock contention.
     func mcpPauseDiscoveryPolling() {
         stopAppDiscoveryPolling()
+        cancelInFlightAppDiscoveryFetch()
+    }
+
+    private func cancelInFlightAppDiscoveryFetch() {
+        appDiscoveryFetchDisposable?.dispose()
+        appDiscoveryFetchDisposable = nil
     }
 
     /// MCP launch-health snapshot (freeze detection inputs).
@@ -155,7 +162,8 @@ class LKLaunchViewController: LKBaseViewController {
             return
         }
 
-        LookinRACSignalRx.observeMainThread(
+        cancelInFlightAppDiscoveryFetch()
+        appDiscoveryFetchDisposable = LookinRACSignalRx.observeMainThread(
             LKAppsManager.sharedInstance.fetchAppInfos(withImage: true, localInfos: appInfos)
         )
         .subscribe(with: self, onSuccess: { owner, apps in
@@ -165,14 +173,14 @@ class LKLaunchViewController: LKBaseViewController {
             }
             owner.enterApp(app)
         })
-        .disposed(by: disposeBag)
     }
 
     private func reloadWithAutoEntering(_ autoEnter: Bool, bypassMCPInProgressCheck: Bool = false) {
         if isEnteringApp { return }
         if !bypassMCPInProgressCheck && LKMCPClientDiagnostics.shared.isMcpOperationInProgress { return }
 
-        LookinRACSignalRx.observeMainThread(
+        cancelInFlightAppDiscoveryFetch()
+        appDiscoveryFetchDisposable = LookinRACSignalRx.observeMainThread(
             LKAppsManager.sharedInstance.fetchAppInfos(withImage: true, localInfos: appInfos)
         )
         .subscribe(with: self, onSuccess: { owner, apps in
@@ -180,7 +188,6 @@ class LKLaunchViewController: LKBaseViewController {
         }, onFailure: { owner, _ in
             owner.handleFetchedApps([], autoEnter: autoEnter)
         })
-        .disposed(by: disposeBag)
     }
 
     private func handleFetchedApps(_ apps: [LKInspectableApp], autoEnter: Bool) {
