@@ -497,7 +497,8 @@ final class LKPreviewController: LKBaseViewController, NSGestureRecognizerDelega
 
     private func hierarchyInfoDidChange() {
         guard let currentInfo = dataSource.rawHierarchyInfo else {
-            assertionFailure()
+            // Session teardown (window close / MCP reconnect) clears hierarchy before the window is gone.
+            lookin_bindObject(nil, forKey: "prevRawHierarchyInfo")
             return
         }
         previewView.appScreenSize = Self.previewAppScreenSize(from: dataSource)
