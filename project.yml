@@ -47,6 +47,35 @@ settings:
       MTL_ENABLE_DEBUG_INFO: NO
 
 targets:
+  LookinMacMCP:
+    type: framework
+    platform: macOS
+    deploymentTarget: "11.5"
+    sources:
+      - path: LookinMacMCP
+        excludes:
+          - LookinMacMCP-Bridging-Header.h
+    settings:
+      base:
+        PRODUCT_NAME: LookinMacMCP
+        PRODUCT_BUNDLE_IDENTIFIER: hughkli.LookinMacMCP
+        DEFINES_MODULE: YES
+        SWIFT_VERSION: "5.0"
+        MACOSX_DEPLOYMENT_TARGET: "11.5"
+        GENERATE_INFOPLIST_FILE: YES
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 1.0.1
+        SKIP_INSTALL: YES
+        SWIFT_OBJC_BRIDGING_HEADER: LookinMacMCP/LookinMacMCP-Bridging-Header.h
+        CLANG_ENABLE_MODULES: YES
+        HEADER_SEARCH_PATHS:
+          - $(SRCROOT)/LookinMacMCP
+      configs:
+        Debug:
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+        Release:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
+
   LookinClient:
     type: application
     platform: macOS
@@ -102,6 +131,8 @@ targets:
       Debug: Pods/Target Support Files/Pods-LookinClient/Pods-LookinClient.debug.xcconfig
       Release: Pods/Target Support Files/Pods-LookinClient/Pods-LookinClient.release.xcconfig
     dependencies:
+      - target: LookinMacMCP
+        embed: true
       - sdk: Security.framework
     scheme:
       testTargets:
@@ -137,6 +168,7 @@ schemes:
   LookinClient:
     build:
       targets:
+        LookinMacMCP: all
         LookinClient: all
         LookinClientUITests: [test]
     run:

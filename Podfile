@@ -14,14 +14,6 @@ post_install do |installer|
       end
     end
   end
-  stubs_path = File.join(installer.sandbox.root, '..', '..', 'LookinOsAppMCP', 'Sources', 'stubs')
-  Dir.glob(File.join(installer.sandbox.root, 'Target Support Files', 'LookinShared', '*.xcconfig')).each do |path|
-    content = File.read(path)
-    unless content.include?('LookinOsAppMCP/Sources/stubs')
-      content += "\nHEADER_SEARCH_PATHS = $(inherited) #{stubs_path}\n"
-      File.write(path, content)
-    end
-  end
 end
 
 target 'LookinClient' do 
@@ -31,7 +23,6 @@ target 'LookinClient' do
     pod 'RxRelay', '~> 6.8'
     pod 'Sparkle', '~> 1.0'
     pod 'LookinShared', :path => '../LookinServer/'
-    pod 'LookinOsAppMCP', :path => '../LookinOsAppMCP/'
     #pod 'LookinShared', :git => 'https://github.com/AlexNikov/LookinServer.git', :branch => 'develop'
 end
 

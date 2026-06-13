@@ -10,7 +10,7 @@ import AppCenter
 import AppCenterAnalytics
 import AppCenterCrashes
 import AppKit
-import LookinOsAppMCP
+import LookinMacMCP
 import LookinShared
 import RxSwift
 

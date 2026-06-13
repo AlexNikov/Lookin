@@ -32,10 +32,12 @@
 		1DD57E59462858B75E004895 /* LKConsoleInputRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 142073B184FFB4A50A40FC6C /* LKConsoleInputRowView.swift */; };
 		1E102A707A45E5E14A32F2BA /* LKJSONAttributeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1350796D193C699B596F97E /* LKJSONAttributeViewController.swift */; };
 		221BE4B3110EDAA29BD10481 /* LKMeasureController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594D0FF0E0FDDDF579CAD90C /* LKMeasureController.swift */; };
+		23002EFEB4170D75A924D3D9 /* LKOsAppMCPServer.h in Headers */ = {isa = PBXBuildFile; fileRef = DA30E2E08A8CB85FC9B0257A /* LKOsAppMCPServer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		269D187675AE4FF395C20854 /* LKVerifyCustomInfoLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9391D5692CE09B59653E1C05 /* LKVerifyCustomInfoLogger.swift */; };
 		279E972653BFBC559BE4084C /* LKDisplayItemNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33EEEC10D94C6D781A0FAA36 /* LKDisplayItemNode.swift */; };
 		285EB084B367348C3AD0AD5C /* LKMeasureResultLineData.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82C9DB698CE523A3C5A66D9 /* LKMeasureResultLineData.swift */; };
 		29AF7409AC09B843B39902D5 /* DashboardAttributeModify.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFCB13C59D36AC0003B55F29 /* DashboardAttributeModify.swift */; };
+		2ADF4F89281ECEC66FD99B8A /* LKOsAppMCPDataSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 52A1F014589BA0A1E6CEC9A4 /* LKOsAppMCPDataSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2C01C1C9C2015D69923C0F49 /* LKPreviewConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09AC74A0B5DEB727FF79A732 /* LKPreviewConstants.swift */; };
 		2D9B63AD9F6A91FCA6E8D1AA /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = CC0000707D327E9725C05D1F /* Localizable.strings */; };
 		2DB0A523A8C455DE51DF179D /* InspectorSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E516B40EA9DBD5881FAD93 /* InspectorSmokeTests.swift */; };
@@ -59,12 +61,14 @@
 		483B930F120D232AEC23623A /* LKHierarchyController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC65E9C0B95B0BFC3984F36C /* LKHierarchyController.swift */; };
 		483DBD504F75C1CEAD9D5081 /* LKDashboardCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2400C88911FFD15A3D8F17 /* LKDashboardCardView.swift */; };
 		4A1C8ADDC5D2F54727221880 /* LKHierarchyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D478AB6F8F43738418AA217 /* LKHierarchyView.swift */; };
+		4AC613457DA99FD42CA7333A /* LKOsAppMCPHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 90E2AC23D8B34BE501C42B42 /* LKOsAppMCPHandler.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4B455DEAF46B8A174B040A16 /* LKDashboardAttributeConstraintsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFDF02A02F43ED374E708095 /* LKDashboardAttributeConstraintsView.swift */; };
 		4B6F5C1F4DE5A77960FCF908 /* LKDashboardAttributeClassView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4319B6E41471DCCC6CE9070 /* LKDashboardAttributeClassView.swift */; };
 		4C16EF8FF11AE859181177E9 /* LKBaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 382C7E0445B16BE29C933390 /* LKBaseView.swift */; };
 		523BE817488B26D9264A5374 /* LKHierarchyDataSource+SearchFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93A9938BCD64BD728E9BA359 /* LKHierarchyDataSource+SearchFocus.swift */; };
 		524153B5B5AD96AA0471B280 /* InspectorHiddenPreviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DE8D472B3F63ECACC9DF5C /* InspectorHiddenPreviewTests.swift */; };
 		530EFB5DAEF7239C2790622B /* LookinDisplayItem+LookinClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A69560D3FA67D8F0A4EAF6 /* LookinDisplayItem+LookinClient.swift */; };
+		531580E4A4D003FDB008AE2D /* LookinMacMCPDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDD98D8E0223D340A9DBBC06 /* LookinMacMCPDataSource.swift */; };
 		53A958F35F0ADCDA33903C29 /* LookinAttributesGroup+LookinClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F8BE20324C17F4B7642279A /* LookinAttributesGroup+LookinClient.swift */; };
 		53F6CC505EF1F145DB9FF3BA /* LKWindowToolbarAppButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CCC285EFAEFEF6AE018B26 /* LKWindowToolbarAppButton.swift */; };
 		5413A63553F4D4921D0DABD8 /* LKStaticWindowController+AsyncUpdate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35E48481E81623830D0BB71A /* LKStaticWindowController+AsyncUpdate.swift */; };
@@ -136,21 +140,25 @@
 		8FE0CB6A1A58060BAAEA9215 /* LKDashboardCardTitleControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAEFC0E13871B52604AA34F7 /* LKDashboardCardTitleControl.swift */; };
 		901D04719095F034EE6EA178 /* LKConnectionManager+ActiveRequests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BF4AFC59DA6D3523C8A7864 /* LKConnectionManager+ActiveRequests.swift */; };
 		91511481EA17D756792B355B /* LKOutlineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D07B4A3F5B8EC68CA3C0A86 /* LKOutlineView.swift */; };
+		921D3E52395E48890199C1FB /* LKOsAppMCPDataSourceSwiftBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27F6A0A2C5CB6482473E06A2 /* LKOsAppMCPDataSourceSwiftBridge.swift */; };
 		925266FE7E6B04CD1AE03DDA /* LKDashboardHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300BD41D11629220AF4400FE /* LKDashboardHeaderView.swift */; };
 		95795A56A9EE7F13C27A896D /* LKLayerLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B16BA0B2B8B9B0DC215B89B /* LKLayerLayout.swift */; };
 		9852C01C30793CEACCB9D25D /* LKStaticViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1987A6B9C805428B6D6E2A9C /* LKStaticViewController.swift */; };
-		991CF2F2163CBC47D00ED858 /* Pods_LookinClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2E835F9F1E0BF7DAA2D138FD /* Pods_LookinClient.framework */; };
 		99CB826A5B997739B20FEA19 /* LKAttrString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 623E836B53E9ABF9F393EAD6 /* LKAttrString.swift */; };
 		99E0F0D1C936468641E0C1B8 /* LKJSONAttributeWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37E65EB3C8B7BEC7FD64EC70 /* LKJSONAttributeWindowController.swift */; };
+		99E5F58B7C315A43869902E9 /* LookinMacMCP.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 14B9DAC805F150744F3A9F2D /* LookinMacMCP.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		9B809FB2E600B5295274AF6F /* LKPreferenceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CDE574B7CC6F5A1CA53F6BC /* LKPreferenceManager.swift */; };
 		9CA6CC85681E23545A559545 /* LKMCPConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404CBCBFEFBA7DA30B2DF3F6 /* LKMCPConstants.swift */; };
+		9F54AB96E4458630249CCE23 /* Pods_LookinClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDD1B57BBB57A579B3B94684 /* Pods_LookinClient.framework */; };
 		A31BAC5CDF51AD88F5852A35 /* LKReadHierarchyController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04E81B5F64B11CD0E0F24A6B /* LKReadHierarchyController.swift */; };
 		A41D18081792E0CCD173B1A9 /* LookinRACSignalRx.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9295947986A8D57714A75984 /* LookinRACSignalRx.swift */; };
 		A54AF40A3B32B5CA92D853FE /* LKStaticWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A8BC952BD35215C8F452CD /* LKStaticWindowController.swift */; };
 		A62FAB125179CF627A4FDC1F /* LKDashboardSectionViewPool.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2FDB69F142E5984A4FD5A0C /* LKDashboardSectionViewPool.swift */; };
 		A6A2ADA3DE57ECB343465D85 /* LKReadWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31DFCB7A9339E1FD4BD9E3B /* LKReadWindowController.swift */; };
+		A6EB2C7EB70E295D8D65404E /* LookinMacMCP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 14B9DAC805F150744F3A9F2D /* LookinMacMCP.framework */; };
 		A9DE2A962071740E29FB7D42 /* LKPreviewStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0068941A92C9B2B8C191A31 /* LKPreviewStageView.swift */; };
 		A9FCF55016EB1B2FC2032B01 /* LKStaticWindowController+MCPAppSwitcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = EED1D3862906849F3444AD55 /* LKStaticWindowController+MCPAppSwitcher.swift */; };
+		AACD1325E8C6E63BCB1DB367 /* Pods_LookinClientUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 332C701B3C48B50C31B13510 /* Pods_LookinClientUITests.framework */; };
 		ACEFF4429CB9D1750B1DA968 /* LKHierarchyDataSource+ColorMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A95117F63C942862C029B376 /* LKHierarchyDataSource+ColorMenu.swift */; };
 		AE5EBF3A5F31D51112A3E472 /* LKDashboardAttributeGeometryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A7F8FECDD92B6C3089D002D /* LKDashboardAttributeGeometryViews.swift */; };
 		AEA26E9BAF343D84177F1376 /* LKTableRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD44EB0D46E94FC6FF4AD374 /* LKTableRowView.swift */; };
@@ -168,8 +176,10 @@
 		BDA53753BA1D7868163B714B /* LKConsoleDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29681F28CFEBDE48746DED68 /* LKConsoleDataSource.swift */; };
 		BED3031A080139D9EC276A43 /* LKLookinClientErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B2E1EBDE8D96724C23AC237 /* LKLookinClientErrors.swift */; };
 		BF6852ED48D04A50B0C7E664 /* LookinUITestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66392AEB864B9924619DF0F /* LookinUITestSupport.swift */; };
+		C07A399E0C4651BBF26A2FFE /* LKOsAppMCPHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = BF12D1F8E9902149C7FAFBB3 /* LKOsAppMCPHandler.m */; };
 		C1006709D6AEE47649309428 /* LKAboutViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90CCC3FA5CFC4A1C0CB0B475 /* LKAboutViewController.swift */; };
 		C19EA70453B17E10DB33B206 /* LKStaticAsyncUpdateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BD24385076496D4B94AF76C /* LKStaticAsyncUpdateManager.swift */; };
+		C1D6161005795EFE59E910A3 /* LKOsAppMCPHTTPModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD76380FCECEB0BD3FEA84D9 /* LKOsAppMCPHTTPModels.swift */; };
 		C1FCA68645839AA41C8F20B9 /* LKReactiveBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92112188565D66924420C228 /* LKReactiveBridge.swift */; };
 		C213DC5A0CCCAC34846160B8 /* LKMCPBlockingWait.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1690E229FEA00443BB76D12 /* LKMCPBlockingWait.swift */; };
 		C494613DB37545184124B670 /* LKMCPClientDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605BA7778E96D65347D80D1E /* LKMCPClientDiagnostics.swift */; };
@@ -190,8 +200,8 @@
 		CCB1F30FF9A9A330F1BCFB76 /* LKInputSearchSuggestionsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E454DA089E6CA3DF4DF693FF /* LKInputSearchSuggestionsContentView.swift */; };
 		CD8407BFAEACA31C7773D71C /* LKDashboardAccessoryWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBB0072EE8839EC77CD59AF2 /* LKDashboardAccessoryWindowController.swift */; };
 		CF177C4C996846170805C51B /* NSString+LookinClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3630410D5D64A8BE76C1E3CE /* NSString+LookinClient.swift */; };
-		D4E217BFBB9C457874F54455 /* Pods_LookinClientUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 736E679F967E72972234F4DB /* Pods_LookinClientUITests.framework */; };
 		D4F8E0EF66A9A084E622291C /* LKTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE57C43A3D1425A827ADBADC /* LKTableView.swift */; };
+		D5E62A938A8C13ECABB407F3 /* LKOsAppMCPServerSwift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC14D8258166799C007F121 /* LKOsAppMCPServerSwift.swift */; };
 		D64A84E48D2C9F1961030BF9 /* LKConnectionRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = C445C2CA316E79254A67F11C /* LKConnectionRequest.swift */; };
 		D64CE48B3152C0C75BA3B2F7 /* LKInputSearchSuggestionsRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04D0EF58096DCE33DBEA80B /* LKInputSearchSuggestionsRowView.swift */; };
 		D8947035E3207D056DC385C9 /* LKReadHierarchyDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D9DD43081EF2E9AE426654F /* LKReadHierarchyDataSource.swift */; };
@@ -241,7 +251,28 @@
 			remoteGlobalIDString = 50318B2811601D83AD92D6FC;
 			remoteInfo = LookinClient;
 		};
+		C5B863FD407AB5954BCCBC5D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4E6DD59FE8A6607C99CD69B1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D90BC7714FC9F27E9ABC7E0A;
+			remoteInfo = LookinMacMCP;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		628F7E6E83D0128E19D4962C /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				99E5F58B7C315A43869902E9 /* LookinMacMCP.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		021265C0D65EA663FC455B67 /* LKTextsMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKTextsMenuView.swift; sourceTree = "<group>"; };
@@ -255,6 +286,7 @@
 		0D478AB6F8F43738418AA217 /* LKHierarchyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKHierarchyView.swift; sourceTree = "<group>"; };
 		0EBA3CA8D0CEF7B43DA2FAB0 /* LookinAutoLayoutConstraint+LookinClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LookinAutoLayoutConstraint+LookinClient.swift"; sourceTree = "<group>"; };
 		142073B184FFB4A50A40FC6C /* LKConsoleInputRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKConsoleInputRowView.swift; sourceTree = "<group>"; };
+		14B9DAC805F150744F3A9F2D /* LookinMacMCP.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LookinMacMCP.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		150E8FA3CE8574BFE65C5F08 /* LKMCPInspectTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKMCPInspectTarget.swift; sourceTree = "<group>"; };
 		153C42BBE608E944982A7D58 /* LKHierarchyDataSource+KeyDown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LKHierarchyDataSource+KeyDown.swift"; sourceTree = "<group>"; };
 		1662E234C8704CFC4E87808A /* LKLaunchWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKLaunchWindowController.swift; sourceTree = "<group>"; };
@@ -269,12 +301,13 @@
 		20BD3838B11DECA34DDBC382 /* NSPointerArray+LookinClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSPointerArray+LookinClient.swift"; sourceTree = "<group>"; };
 		21EB6C613E0FDE734BB362E6 /* LKDashboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardViewController.swift; sourceTree = "<group>"; };
 		234B999DAF435D6A7B910F1A /* LKDebugEventLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDebugEventLog.swift; sourceTree = "<group>"; };
+		2586F60E2997FAF8BCF25E36 /* Pods-LookinClientUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClientUITests.debug.xcconfig"; path = "Target Support Files/Pods-LookinClientUITests/Pods-LookinClientUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		27F6A0A2C5CB6482473E06A2 /* LKOsAppMCPDataSourceSwiftBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKOsAppMCPDataSourceSwiftBridge.swift; sourceTree = "<group>"; };
 		2878495DC2C48537763CD3AD /* LKWireScreenshotCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKWireScreenshotCoordinator.swift; sourceTree = "<group>"; };
 		2961B16EB870CC8DF56665E1 /* LKReadViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKReadViewController.swift; sourceTree = "<group>"; };
 		29681F28CFEBDE48746DED68 /* LKConsoleDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKConsoleDataSource.swift; sourceTree = "<group>"; };
 		2BF4AFC59DA6D3523C8A7864 /* LKConnectionManager+ActiveRequests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LKConnectionManager+ActiveRequests.swift"; sourceTree = "<group>"; };
 		2E1F15CA55ACCB8E7455175E /* LookinSignalTuple.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LookinSignalTuple.swift; sourceTree = "<group>"; };
-		2E835F9F1E0BF7DAA2D138FD /* Pods_LookinClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LookinClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F251BFCF243469797E3E379 /* LKBaseControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKBaseControl.swift; sourceTree = "<group>"; };
 		2F8BE20324C17F4B7642279A /* LookinAttributesGroup+LookinClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LookinAttributesGroup+LookinClient.swift"; sourceTree = "<group>"; };
 		300BD41D11629220AF4400FE /* LKDashboardHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardHeaderView.swift; sourceTree = "<group>"; };
@@ -282,6 +315,7 @@
 		31BEF2B4D4525C1F3F0CA031 /* LKLogsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKLogsViewController.swift; sourceTree = "<group>"; };
 		32330FACDEE6FFE43F819DFD /* LKPreferencePopupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKPreferencePopupView.swift; sourceTree = "<group>"; };
 		3246CC87E3D0834A086254DB /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		332C701B3C48B50C31B13510 /* Pods_LookinClientUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LookinClientUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3374D92ED0744C84BCA7677A /* LKAttrString+Conversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LKAttrString+Conversion.swift"; sourceTree = "<group>"; };
 		33EEEC10D94C6D781A0FAA36 /* LKDisplayItemNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDisplayItemNode.swift; sourceTree = "<group>"; };
 		352BFC81E4B2E75AE07A638C /* CwlDemangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CwlDemangle.swift; sourceTree = "<group>"; };
@@ -304,6 +338,7 @@
 		4504F0DA960DCBD6565F8168 /* LKColorIndicatorLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKColorIndicatorLayer.swift; sourceTree = "<group>"; };
 		4699F68D9BD5C1D0D4A3E7ED /* LKAboutWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKAboutWindowController.swift; sourceTree = "<group>"; };
 		48AD435F1DE57759C828C297 /* LKOutlineItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKOutlineItem.swift; sourceTree = "<group>"; };
+		493B67F8EC22FE5DEFABB4CF /* Pods-LookinClient.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClient.release.xcconfig"; path = "Target Support Files/Pods-LookinClient/Pods-LookinClient.release.xcconfig"; sourceTree = "<group>"; };
 		49A8639A8A1BA88630C34568 /* NSColor+LookinClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSColor+LookinClient.swift"; sourceTree = "<group>"; };
 		49B91C30B082AFFE6D92D217 /* LKDashboardAttributeJsonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardAttributeJsonView.swift; sourceTree = "<group>"; };
 		4AC4B3E2F4C7BD721AE1D60B /* LKInputSearchSuggestionWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKInputSearchSuggestionWindowController.swift; sourceTree = "<group>"; };
@@ -311,6 +346,7 @@
 		4EA890A648D1C9E0CFDDE72F /* LKMCPLaunchHealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKMCPLaunchHealth.swift; sourceTree = "<group>"; };
 		5096D1E94E75A2617657CDB1 /* LKLayoutCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKLayoutCore.swift; sourceTree = "<group>"; };
 		5218DCCBBE1A7107FB81DA8E /* LKWindowToolbarScaleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKWindowToolbarScaleView.swift; sourceTree = "<group>"; };
+		52A1F014589BA0A1E6CEC9A4 /* LKOsAppMCPDataSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LKOsAppMCPDataSource.h; sourceTree = "<group>"; };
 		5391A12CD96BE1C40894AD20 /* LKDashboardTextControlEditingFlag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardTextControlEditingFlag.swift; sourceTree = "<group>"; };
 		5488E9AE374A62CCCE188684 /* LKHierarchyDataSource+Reload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LKHierarchyDataSource+Reload.swift"; sourceTree = "<group>"; };
 		54AAE28E9371D596FA7A3A89 /* LookinAttributesSection+LookinClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LookinAttributesSection+LookinClient.swift"; sourceTree = "<group>"; };
@@ -342,15 +378,13 @@
 		708B2A5176CA1F376878904E /* LKHierarchyDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKHierarchyDataSource.swift; sourceTree = "<group>"; };
 		70E771C79B16607459E02B10 /* LKEnumListRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKEnumListRegistry.swift; sourceTree = "<group>"; };
 		714E94DE05F72ECF1EF1926E /* LKDashboardAttributeSwitchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardAttributeSwitchView.swift; sourceTree = "<group>"; };
-		736E679F967E72972234F4DB /* Pods_LookinClientUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LookinClientUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		73C5C10E3BABC5AB714AF685 /* LKDashboardAttributeRelationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardAttributeRelationView.swift; sourceTree = "<group>"; };
 		76076092517A2967CEC43266 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/MainMenu.strings"; sourceTree = "<group>"; };
+		77C8B8F5A409811DF0BF24A9 /* Pods-LookinClient.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClient.debug.xcconfig"; path = "Target Support Files/Pods-LookinClient/Pods-LookinClient.debug.xcconfig"; sourceTree = "<group>"; };
 		785DD0A270A7F9A86809C99B /* LKTipsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKTipsView.swift; sourceTree = "<group>"; };
 		7BA386B895ADF4E51ECF336D /* LKDashboardAttributeColorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardAttributeColorView.swift; sourceTree = "<group>"; };
 		7C2400C88911FFD15A3D8F17 /* LKDashboardCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardCardView.swift; sourceTree = "<group>"; };
-		7D9A6F20E5AB4097AADEA8F2 /* Pods-LookinClient.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClient.debug.xcconfig"; path = "Target Support Files/Pods-LookinClient/Pods-LookinClient.debug.xcconfig"; sourceTree = "<group>"; };
 		7D9DD43081EF2E9AE426654F /* LKReadHierarchyDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKReadHierarchyDataSource.swift; sourceTree = "<group>"; };
-		7DDD6EEC74DE41B25B1E715C /* Pods-LookinClient.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClient.release.xcconfig"; path = "Target Support Files/Pods-LookinClient/Pods-LookinClient.release.xcconfig"; sourceTree = "<group>"; };
 		7E18A3876E3752D98CD4BEC9 /* LKNavigationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKNavigationManager.swift; sourceTree = "<group>"; };
 		7E7812BFC5E7CEC979E4794A /* LKNSView+Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LKNSView+Layout.swift"; sourceTree = "<group>"; };
 		807A829D08227A51112475AA /* LKHierarchyItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKHierarchyItem.swift; sourceTree = "<group>"; };
@@ -365,11 +399,13 @@
 		8969376E80B99A43F2D5D5BD /* LKConnectionManager+WireV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LKConnectionManager+WireV2.swift"; sourceTree = "<group>"; };
 		89DABBDB9E0B499081D3E2FF /* LKStaticWindowController+AppMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LKStaticWindowController+AppMenu.swift"; sourceTree = "<group>"; };
 		8B16BA0B2B8B9B0DC215B89B /* LKLayerLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKLayerLayout.swift; sourceTree = "<group>"; };
+		8CC14D8258166799C007F121 /* LKOsAppMCPServerSwift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKOsAppMCPServerSwift.swift; sourceTree = "<group>"; };
 		8D817C8EB59AE9F3F5030FDF /* LKExportAccessoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKExportAccessoryView.swift; sourceTree = "<group>"; };
 		8D8FD7CBEFCF5740218A5E0F /* LKDashboardAttributeNumberInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardAttributeNumberInputView.swift; sourceTree = "<group>"; };
 		8EDF5B96410B8C8ABF332C36 /* LKDashboardAttributeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardAttributeView.swift; sourceTree = "<group>"; };
 		8FB0B7593EC0575995D57706 /* LKStaticHierarchyDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKStaticHierarchyDataSource.swift; sourceTree = "<group>"; };
 		90CCC3FA5CFC4A1C0CB0B475 /* LKAboutViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKAboutViewController.swift; sourceTree = "<group>"; };
+		90E2AC23D8B34BE501C42B42 /* LKOsAppMCPHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LKOsAppMCPHandler.h; sourceTree = "<group>"; };
 		92112188565D66924420C228 /* LKReactiveBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKReactiveBridge.swift; sourceTree = "<group>"; };
 		9295947986A8D57714A75984 /* LookinRACSignalRx.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LookinRACSignalRx.swift; sourceTree = "<group>"; };
 		9391D5692CE09B59653E1C05 /* LKVerifyCustomInfoLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKVerifyCustomInfoLogger.swift; sourceTree = "<group>"; };
@@ -397,7 +433,6 @@
 		AAEFC0E13871B52604AA34F7 /* LKDashboardCardTitleControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardCardTitleControl.swift; sourceTree = "<group>"; };
 		ABC3ADA3EB975C5B7B970D71 /* NSArray+LookinClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSArray+LookinClient.swift"; sourceTree = "<group>"; };
 		AC1BEF76D973D0A447D18FAB /* LKConsoleSelectPopoverItemControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKConsoleSelectPopoverItemControl.swift; sourceTree = "<group>"; };
-		AD604C4E94796244E1B07BBC /* Pods-LookinClientUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClientUITests.debug.xcconfig"; path = "Target Support Files/Pods-LookinClientUITests/Pods-LookinClientUITests.debug.xcconfig"; sourceTree = "<group>"; };
 		ADB7E90B0A6122F8C42D03BC /* LKDanceUIAttrMaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDanceUIAttrMaker.swift; sourceTree = "<group>"; };
 		AE57C43A3D1425A827ADBADC /* LKTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKTableView.swift; sourceTree = "<group>"; };
 		AE77D9A1A78CCB9B188F7B5A /* LKDashboardSearchMethodsDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardSearchMethodsDataSource.swift; sourceTree = "<group>"; };
@@ -410,7 +445,9 @@
 		B87A07B8C91293ADCA15C9B3 /* LKConsoleDataSourceRowItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKConsoleDataSourceRowItem.swift; sourceTree = "<group>"; };
 		B8D32B7034CCB443AA2C9428 /* LKExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKExportManager.swift; sourceTree = "<group>"; };
 		B8E0A690191A92BA9CC4D4C7 /* LKHierarchyHandlersPopoverController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKHierarchyHandlersPopoverController.swift; sourceTree = "<group>"; };
+		BD76380FCECEB0BD3FEA84D9 /* LKOsAppMCPHTTPModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKOsAppMCPHTTPModels.swift; sourceTree = "<group>"; };
 		BDB5061BFB1AEC056DDA158F /* LKTwoColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKTwoColors.swift; sourceTree = "<group>"; };
+		BF12D1F8E9902149C7FAFBB3 /* LKOsAppMCPHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LKOsAppMCPHandler.m; sourceTree = "<group>"; };
 		C1690E229FEA00443BB76D12 /* LKMCPBlockingWait.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKMCPBlockingWait.swift; sourceTree = "<group>"; };
 		C238A27901AAD7D4E4DBFDCE /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/MainMenu.strings; sourceTree = "<group>"; };
 		C3D03CFB771B58C7621952B3 /* LKMCPResponses.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKMCPResponses.swift; sourceTree = "<group>"; };
@@ -428,6 +465,7 @@
 		CC65E9C0B95B0BFC3984F36C /* LKHierarchyController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKHierarchyController.swift; sourceTree = "<group>"; };
 		CC9F2516DEADEBDC9BA0F2D6 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		CD04E04DECC5839B59BC50BF /* LKWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKWindow.swift; sourceTree = "<group>"; };
+		CD3C7B804C0C8B877015883D /* Pods-LookinClientUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClientUITests.release.xcconfig"; path = "Target Support Files/Pods-LookinClientUITests/Pods-LookinClientUITests.release.xcconfig"; sourceTree = "<group>"; };
 		CD718C6BD24453C3CCDA48D9 /* LKPerformanceReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKPerformanceReporter.swift; sourceTree = "<group>"; };
 		CF0431D462E8EE16691F095B /* LKReloadItemAndChildrenUpdateTaskMaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKReloadItemAndChildrenUpdateTaskMaker.swift; sourceTree = "<group>"; };
 		D0068941A92C9B2B8C191A31 /* LKPreviewStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKPreviewStageView.swift; sourceTree = "<group>"; };
@@ -442,9 +480,11 @@
 		D63468E4476B858B08FA3CEC /* LKAppsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKAppsManager.swift; sourceTree = "<group>"; };
 		D6852F429BA9BB5D5F616407 /* LKConnectionManager+Transport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LKConnectionManager+Transport.swift"; sourceTree = "<group>"; };
 		D7A8BC952BD35215C8F452CD /* LKStaticWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKStaticWindowController.swift; sourceTree = "<group>"; };
+		DA30E2E08A8CB85FC9B0257A /* LKOsAppMCPServer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LKOsAppMCPServer.h; sourceTree = "<group>"; };
 		DBA9D8B942EC490031A850D3 /* LKMenuPopoverSettingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKMenuPopoverSettingController.swift; sourceTree = "<group>"; };
+		DDD1B57BBB57A579B3B94684 /* Pods_LookinClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LookinClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		DDD98D8E0223D340A9DBBC06 /* LookinMacMCPDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LookinMacMCPDataSource.swift; sourceTree = "<group>"; };
 		E0EEF92A349BF4451A849B6F /* LKMCPTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKMCPTiming.swift; sourceTree = "<group>"; };
-		E0F02B92787B538C7354B96F /* Pods-LookinClientUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClientUITests.release.xcconfig"; path = "Target Support Files/Pods-LookinClientUITests/Pods-LookinClientUITests.release.xcconfig"; sourceTree = "<group>"; };
 		E31DFCB7A9339E1FD4BD9E3B /* LKReadWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKReadWindowController.swift; sourceTree = "<group>"; };
 		E4319B6E41471DCCC6CE9070 /* LKDashboardAttributeClassView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardAttributeClassView.swift; sourceTree = "<group>"; };
 		E454DA089E6CA3DF4DF693FF /* LKInputSearchSuggestionsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKInputSearchSuggestionsContentView.swift; sourceTree = "<group>"; };
@@ -485,16 +525,17 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6EB2C7EB70E295D8D65404E /* LookinMacMCP.framework in Frameworks */,
 				E7402447427D7DE4D86ACEB4 /* Security.framework in Frameworks */,
-				991CF2F2163CBC47D00ED858 /* Pods_LookinClient.framework in Frameworks */,
+				9F54AB96E4458630249CCE23 /* Pods_LookinClient.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B41DAB2A8E073DDB1B80BBBA /* Frameworks */ = {
+		E79A6A4A8E464A2065DCB5FA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D4E217BFBB9C457874F54455 /* Pods_LookinClientUITests.framework in Frameworks */,
+				AACD1325E8C6E63BCB1DB367 /* Pods_LookinClientUITests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -588,8 +629,8 @@
 			isa = PBXGroup;
 			children = (
 				CC9F2516DEADEBDC9BA0F2D6 /* Security.framework */,
-				2E835F9F1E0BF7DAA2D138FD /* Pods_LookinClient.framework */,
-				736E679F967E72972234F4DB /* Pods_LookinClientUITests.framework */,
+				DDD1B57BBB57A579B3B94684 /* Pods_LookinClient.framework */,
+				332C701B3C48B50C31B13510 /* Pods_LookinClientUITests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -705,10 +746,10 @@
 			isa = PBXGroup;
 			children = (
 				4F3A2853E3B0D5BBD2C78AA1 /* Target Support Files */,
-				7D9A6F20E5AB4097AADEA8F2 /* Pods-LookinClient.debug.xcconfig */,
-				7DDD6EEC74DE41B25B1E715C /* Pods-LookinClient.release.xcconfig */,
-				AD604C4E94796244E1B07BBC /* Pods-LookinClientUITests.debug.xcconfig */,
-				E0F02B92787B538C7354B96F /* Pods-LookinClientUITests.release.xcconfig */,
+				77C8B8F5A409811DF0BF24A9 /* Pods-LookinClient.debug.xcconfig */,
+				493B67F8EC22FE5DEFABB4CF /* Pods-LookinClient.release.xcconfig */,
+				2586F60E2997FAF8BCF25E36 /* Pods-LookinClientUITests.debug.xcconfig */,
+				CD3C7B804C0C8B877015883D /* Pods-LookinClientUITests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -785,6 +826,7 @@
 			children = (
 				53706213A756BEE57B1725B0 /* LookinClient */,
 				FB1C0A2071350FF2A9898324 /* LookinClientUITests */,
+				8F9CB91D9D43572BD17B2153 /* LookinMacMCP */,
 				4B0B8D3FCDBD664746861676 /* Pods */,
 				267ECD9D450D3E54F1E605EA /* Frameworks */,
 				72ED0F458F017B48BB715EBE /* Products */,
@@ -826,8 +868,24 @@
 			children = (
 				9FFB22D83AFFA8C4EC67DE3B /* LookinClient.app */,
 				A7EE45A52A624113075BD01B /* LookinClientUITests.xctest */,
+				14B9DAC805F150744F3A9F2D /* LookinMacMCP.framework */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		8F9CB91D9D43572BD17B2153 /* LookinMacMCP */ = {
+			isa = PBXGroup;
+			children = (
+				52A1F014589BA0A1E6CEC9A4 /* LKOsAppMCPDataSource.h */,
+				27F6A0A2C5CB6482473E06A2 /* LKOsAppMCPDataSourceSwiftBridge.swift */,
+				90E2AC23D8B34BE501C42B42 /* LKOsAppMCPHandler.h */,
+				BF12D1F8E9902149C7FAFBB3 /* LKOsAppMCPHandler.m */,
+				BD76380FCECEB0BD3FEA84D9 /* LKOsAppMCPHTTPModels.swift */,
+				DA30E2E08A8CB85FC9B0257A /* LKOsAppMCPServer.h */,
+				8CC14D8258166799C007F121 /* LKOsAppMCPServerSwift.swift */,
+				DDD98D8E0223D340A9DBBC06 /* LookinMacMCPDataSource.swift */,
+			);
+			path = LookinMacMCP;
 			sourceTree = "<group>";
 		};
 		99251BDC29ED84D982B048DA /* Logs */ = {
@@ -1013,21 +1071,36 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXHeadersBuildPhase section */
+		95D3C0C0CB5C5BDEB94F6524 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2ADF4F89281ECEC66FD99B8A /* LKOsAppMCPDataSource.h in Headers */,
+				4AC613457DA99FD42CA7333A /* LKOsAppMCPHandler.h in Headers */,
+				23002EFEB4170D75A924D3D9 /* LKOsAppMCPServer.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
 /* Begin PBXNativeTarget section */
 		50318B2811601D83AD92D6FC /* LookinClient */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A70CE49012A7D9770D1A9595 /* Build configuration list for PBXNativeTarget "LookinClient" */;
 			buildPhases = (
-				2FEC6C722C7DAEAAB698ACF3 /* [CP] Check Pods Manifest.lock */,
+				95D657FFF1592AF82C64E212 /* [CP] Check Pods Manifest.lock */,
 				9F215BD0C28690FEDB281A6D /* Sources */,
 				87A0BC58E0C61E9F22A590F8 /* Resources */,
 				1382687FA37B2468F6CF3744 /* Frameworks */,
-				E2BBAE8BF83717B054310D83 /* [CP] Embed Pods Frameworks */,
-				3D92B2EDEEB29EABA5FCA3F4 /* [CP] Copy Pods Resources */,
+				628F7E6E83D0128E19D4962C /* Embed Frameworks */,
+				2EB0651255D6F719712C31FF /* [CP] Embed Pods Frameworks */,
+				E6CBB058B94FB1826E7B0D1E /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				1D8DBACB2EEE4D0C027E7118 /* PBXTargetDependency */,
 			);
 			name = LookinClient;
 			productName = LookinClient;
@@ -1038,9 +1111,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = ED661F2008A46475E037CDD5 /* Build configuration list for PBXNativeTarget "LookinClientUITests" */;
 			buildPhases = (
-				826A34AB26A5CD332D92E4C2 /* [CP] Check Pods Manifest.lock */,
+				6C8A0A98826281EC2237DB4D /* [CP] Check Pods Manifest.lock */,
 				E3E20E661EE98D142E13C503 /* Sources */,
-				B41DAB2A8E073DDB1B80BBBA /* Frameworks */,
+				E79A6A4A8E464A2065DCB5FA /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -1051,6 +1124,22 @@
 			productName = LookinClientUITests;
 			productReference = A7EE45A52A624113075BD01B /* LookinClientUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		D90BC7714FC9F27E9ABC7E0A /* LookinMacMCP */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 78039A52F085A1611CA0F164 /* Build configuration list for PBXNativeTarget "LookinMacMCP" */;
+			buildPhases = (
+				95D3C0C0CB5C5BDEB94F6524 /* Headers */,
+				0258B25F84CD3F84CBED25F3 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LookinMacMCP;
+			productName = LookinMacMCP;
+			productReference = 14B9DAC805F150744F3A9F2D /* LookinMacMCP.framework */;
+			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
 
@@ -1085,6 +1174,7 @@
 			targets = (
 				50318B2811601D83AD92D6FC /* LookinClient */,
 				7EC53692C0B1BEF871402C77 /* LookinClientUITests */,
+				D90BC7714FC9F27E9ABC7E0A /* LookinMacMCP */,
 			);
 		};
 /* End PBXProject section */
@@ -1107,46 +1197,24 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		2FEC6C722C7DAEAAB698ACF3 /* [CP] Check Pods Manifest.lock */ = {
+		2EB0651255D6F719712C31FF /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
+			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-LookinClient-checkManifestLockResult.txt",
+				"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		3D92B2EDEEB29EABA5FCA3F4 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		826A34AB26A5CD332D92E4C2 /* [CP] Check Pods Manifest.lock */ = {
+		6C8A0A98826281EC2237DB4D /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1168,26 +1236,60 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		E2BBAE8BF83717B054310D83 /* [CP] Embed Pods Frameworks */ = {
+		95D657FFF1592AF82C64E212 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			name = "[CP] Embed Pods Frameworks";
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-LookinClient-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-frameworks.sh\"\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		E6CBB058B94FB1826E7B0D1E /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		0258B25F84CD3F84CBED25F3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				921D3E52395E48890199C1FB /* LKOsAppMCPDataSourceSwiftBridge.swift in Sources */,
+				C1D6161005795EFE59E910A3 /* LKOsAppMCPHTTPModels.swift in Sources */,
+				C07A399E0C4651BBF26A2FFE /* LKOsAppMCPHandler.m in Sources */,
+				D5E62A938A8C13ECABB407F3 /* LKOsAppMCPServerSwift.swift in Sources */,
+				531580E4A4D003FDB008AE2D /* LookinMacMCPDataSource.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9F215BD0C28690FEDB281A6D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1419,6 +1521,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		1D8DBACB2EEE4D0C027E7118 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D90BC7714FC9F27E9ABC7E0A /* LookinMacMCP */;
+			targetProxy = C5B863FD407AB5954BCCBC5D /* PBXContainerItemProxy */;
+		};
 		872964134CD2816C1B808816 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 50318B2811601D83AD92D6FC /* LookinClient */;
@@ -1442,7 +1549,7 @@
 /* Begin XCBuildConfiguration section */
 		09728E7C77A6A9D82C63EE79 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = AD604C4E94796244E1B07BBC /* Pods-LookinClientUITests.debug.xcconfig */;
+			baseConfigurationReference = 2586F60E2997FAF8BCF25E36 /* Pods-LookinClientUITests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "-";
@@ -1464,9 +1571,40 @@
 			};
 			name = Debug;
 		};
+		3B89BFAAFE47C19FAE44EEF2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/LookinMacMCP";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.5;
+				MARKETING_VERSION = 1.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = hughkli.LookinMacMCP;
+				PRODUCT_NAME = LookinMacMCP;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "LookinMacMCP/LookinMacMCP-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
 		54318736379850D8D14A58C7 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7DDD6EEC74DE41B25B1E715C /* Pods-LookinClient.release.xcconfig */;
+			baseConfigurationReference = 493B67F8EC22FE5DEFABB4CF /* Pods-LookinClient.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = LookinClient/Lookin.entitlements;
@@ -1508,9 +1646,40 @@
 			};
 			name = Release;
 		};
+		61A75EAF46B70C7DCC9863B9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/LookinMacMCP";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.5;
+				MARKETING_VERSION = 1.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = hughkli.LookinMacMCP;
+				PRODUCT_NAME = LookinMacMCP;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "LookinMacMCP/LookinMacMCP-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
 		8B7DC726D2AB4C17A17E6B5F /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E0F02B92787B538C7354B96F /* Pods-LookinClientUITests.release.xcconfig */;
+			baseConfigurationReference = CD3C7B804C0C8B877015883D /* Pods-LookinClientUITests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "-";
@@ -1600,7 +1769,7 @@
 		};
 		9C10936A6FB288700D174036 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7D9A6F20E5AB4097AADEA8F2 /* Pods-LookinClient.debug.xcconfig */;
+			baseConfigurationReference = 77C8B8F5A409811DF0BF24A9 /* Pods-LookinClient.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = LookinClient/Lookin.entitlements;
@@ -1711,6 +1880,15 @@
 			buildConfigurations = (
 				8F255802814FF3D4A34CBE4C /* Debug */,
 				F7BE1DC8149728240A716EF5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		78039A52F085A1611CA0F164 /* Build configuration list for PBXNativeTarget "LookinMacMCP" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				61A75EAF46B70C7DCC9863B9 /* Debug */,
+				3B89BFAAFE47C19FAE44EEF2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

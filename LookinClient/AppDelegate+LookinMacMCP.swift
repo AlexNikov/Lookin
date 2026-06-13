@@ -6,7 +6,7 @@
 //
 
 import AppKit
-import LookinOsAppMCP
+import LookinMacMCP
 import LookinShared
 
 // MARK: - MCP (LookinMacMCPDataSource)

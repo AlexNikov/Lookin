@@ -17,7 +17,7 @@ pass() {
   echo "verify_lookin_client_migration: PASS — $1"
 }
 
-# G0: 0 .m fileRef in Sources LookinClient
+# G0: 0 .m fileRef in Sources LookinClient (LookinMacMCP framework may keep legacy handler .m)
 g0_no_m_in_sources() {
   local count
   count="$(python3 - "$PBXPROJ" <<'PY'
@@ -31,22 +31,45 @@ for m in re.finditer(
     re.S,
 ):
     refs[m.group(1)] = m.group(3).strip().strip('"')
-builds = re.findall(
+builds = {}
+for m in re.finditer(
     r'\t\t([A-F0-9]+) /\* (.+?) in Sources \*/ = \{isa = PBXBuildFile; fileRef = ([A-F0-9]+)',
     text,
+):
+    builds[m.group(1)] = m.group(3)
+# LookinClient target Sources build phase only (not LookinMacMCP / UITests).
+client_phase = re.search(
+    r'/\* LookinClient \*/ = \{[^}]*?buildPhases = \(([^)]+)\)',
+    text,
+    re.S,
 )
+if not client_phase:
+    print(-1)
+    sys.exit(0)
+phase_ids = re.findall(r'([A-F0-9]+) /\* Sources \*/', client_phase.group(1))
+sources_phases = set(phase_ids)
 m_count = 0
-for _, _, ref in builds:
-    path = refs.get(ref, "")
-    if path.endswith(".m"):
-        m_count += 1
+for phase_m in re.finditer(
+    r'\t\t([A-F0-9]+) /\* Sources \*/ = \{isa = PBXSourcesBuildPhase;.*?files = \((.*?)\);',
+    text,
+    re.S,
+):
+    if phase_m.group(1) not in sources_phases:
+        continue
+    for build_id in re.findall(r'([A-F0-9]+) /\*', phase_m.group(2)):
+        path = refs.get(builds.get(build_id, ""), "")
+        if path.endswith(".m"):
+            m_count += 1
 print(m_count)
 PY
 )"
-  if [[ "$count" != "0" ]]; then
-    fail "G0: found $count .m fileRef in Sources (expected 0)"
+  if [[ "$count" == "-1" ]]; then
+    fail "G0: could not locate LookinClient Sources build phase"
   fi
-  pass "G0: 0 .m fileRef in Sources"
+  if [[ "$count" != "0" ]]; then
+    fail "G0: found $count .m fileRef in LookinClient Sources (expected 0)"
+  fi
+  pass "G0: 0 .m fileRef in LookinClient Sources"
 }
 
 # G1: Connection layer free of RACSubject
@@ -78,12 +101,50 @@ g3_no_rac_pod() {
   pass "G3: ReactiveObjC absent from Podfile"
 }
 
-# G4: no ObjC bridging header (removed; Swift imports LookinShared)
+# G4: LookinClient has no ObjC bridging header (LookinMacMCP may use one for legacy handler)
 g4_no_bridging_header() {
   local pbx_import_count
-  pbx_import_count="$(rg -c 'SWIFT_OBJC_BRIDGING_HEADER = "[^"]+"' "$PBXPROJ" 2>/dev/null | wc -l | tr -d ' ' || true)"
+  pbx_import_count="$(python3 - "$PBXPROJ" <<'PY'
+import re, sys
+text = open(sys.argv[1]).read()
+# LookinClient target build configuration list only.
+m = re.search(
+    r'/\* LookinClient \*/ = \{[^}]*?buildConfigurationList = ([A-F0-9]+)',
+    text,
+    re.S,
+)
+if not m:
+    print(-1)
+    raise SystemExit
+list_id = m.group(1)
+list_m = re.search(
+    rf'{list_id} /\* Build configuration list for PBXNativeTarget "LookinClient" \*/ = \{{[^}}]*?buildConfigurations = \(([^)]+)\)',
+    text,
+    re.S,
+)
+if not list_m:
+    print(-1)
+    raise SystemExit
+cfg_ids = re.findall(r'([A-F0-9]+) /\*', list_m.group(1))
+count = 0
+for cfg_id in cfg_ids:
+    cfg_m = re.search(
+        rf'{cfg_id} /\* [^ ]+ \*/ = \{{[^}}]*?buildSettings = \{{([^}}]+)\}};',
+        text,
+        re.S,
+    )
+    if not cfg_m:
+        continue
+    if re.search(r'SWIFT_OBJC_BRIDGING_HEADER = "[^"]+"', cfg_m.group(1)):
+        count += 1
+print(count)
+PY
+)"
+  if [[ "$pbx_import_count" == "-1" ]]; then
+    fail "G4: could not locate LookinClient build configurations"
+  fi
   if [[ "${pbx_import_count:-0}" != "0" ]]; then
-    fail "G4: SWIFT_OBJC_BRIDGING_HEADER still set in project.pbxproj (expected empty)"
+    fail "G4: LookinClient SWIFT_OBJC_BRIDGING_HEADER still set (expected empty)"
   fi
   if [[ -f "$BRIDGING" ]]; then
     local import_count
@@ -94,7 +155,7 @@ g4_no_bridging_header() {
     fi
     fail "G4: bridging header file still exists at $BRIDGING (expected removed)"
   fi
-  pass "G4: no ObjC bridging header"
+  pass "G4: LookinClient has no ObjC bridging header"
 }
 
 # G5: no orphan .m under LookinClient/
