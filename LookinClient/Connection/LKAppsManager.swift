@@ -344,8 +344,12 @@ public final class LKAppsManager: NSObject {
     private let disposeBag = DisposeBag()
     private var autoReconnectDisposeBag = DisposeBag()
 
-    private static let autoReconnectMaxAttempts = 10
+    private static let autoReconnectMaxAttempts = 40
     private static let autoReconnectIntervalSec: RxTimeInterval = .seconds(3)
+    /// Per-attempt timeout for fetchInspectableApp during auto-reconnect. Bounds the wait
+    /// when purgeDisconnectedCachedChannels stalls on a dead TCP connection or when the
+    /// App request is slow. Should be well below the default fetchAppInfos timeout (~25s).
+    private static let autoReconnectFetchTimeoutSec: RxTimeInterval = .seconds(10)
 
     private let switchStatusRelay = BehaviorRelay<SwitchStatus>(value: .idle)
     public var switchStatusObservable: Observable<SwitchStatus> { switchStatusRelay.asObservable() }
@@ -755,6 +759,7 @@ public final class LKAppsManager: NSObject {
             .flatMapFirst { [weak self] _ -> Observable<LKInspectableApp> in
                 guard let self else { return .empty() }
                 return self.fetchInspectableApp(matching: session)
+                    .timeout(Self.autoReconnectFetchTimeoutSec, scheduler: MainScheduler.instance)
                     .asObservable()
                     .catch { _ in .empty() }
             }
