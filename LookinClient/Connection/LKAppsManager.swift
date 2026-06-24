@@ -752,7 +752,7 @@ public final class LKAppsManager: NSObject {
 
         Observable.merge(pollTrigger, serverReadyTrigger)
             .take(until: stopSignal)
-            .flatMap(maxConcurrent: 1) { [weak self] _ -> Observable<LKInspectableApp> in
+            .flatMapFirst { [weak self] _ -> Observable<LKInspectableApp> in
                 guard let self else { return .empty() }
                 return self.fetchInspectableApp(matching: session)
                     .asObservable()
