@@ -745,10 +745,13 @@ public final class LKAppsManager: NSObject {
         }
 
         // Fast path: server signals Peertalk is ready — skip the 3s wait.
+        // flatMap (not flatMapLatest): never cancel an in-flight fetchInspectableApp since
+        // fetchAppInfos holds a lock; cancelling before innerDisposable is assigned leaves
+        // the lock permanently held, blocking all subsequent fetchAppInfos calls.
         LKConnectionManager.sharedInstance.didReceivePush
             .filter { ($0.second as? NSNumber)?.uint32Value == LookinWirePushTypes.serverReady }
             .take(until: stopSignal)
-            .flatMapLatest { [weak self] _ -> Observable<LKInspectableApp> in
+            .flatMap { [weak self] _ -> Observable<LKInspectableApp> in
                 guard let self else { return .empty() }
                 return self.fetchInspectableApp(matching: session)
                     .asObservable()
@@ -762,7 +765,7 @@ public final class LKAppsManager: NSObject {
         Observable<Int>.interval(Self.autoReconnectIntervalSec, scheduler: MainScheduler.instance)
             .take(Self.autoReconnectMaxAttempts)
             .take(until: stopSignal)
-            .flatMapLatest { [weak self] _ -> Observable<LKInspectableApp> in
+            .flatMap { [weak self] _ -> Observable<LKInspectableApp> in
                 guard let self else { return .empty() }
                 return self.fetchInspectableApp(matching: session)
                     .asObservable()
