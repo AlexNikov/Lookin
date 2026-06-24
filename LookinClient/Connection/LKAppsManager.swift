@@ -304,8 +304,10 @@ public final class LKAppsManager: NSObject {
     /// Observe switchSuccessObservable / switchFailureObservable for results.
     public func switchToInspectableApp(_ selected: LKInspectableApp) {
         let previousApp = inspectingApp
-        // Resetting the bag disposes the in-flight subscription (cancel); intentionalSessionChange
-        // is reset by connectInspectableApp's onDispose and immediately re-set below.
+        // Set flag before resetting the bag so the old subscription's onDispose (which clears the flag)
+        // cannot leave a window where channelWillEnd triggers a spurious auto-reconnect.
+        intentionalSessionChange = true
+        autoReconnectDisposeBag = DisposeBag()
         currentSwitchDisposeBag = DisposeBag()
         switchStatusRelay.accept(.connecting(selected))
         connectInspectableApp(selected)
@@ -340,6 +342,10 @@ public final class LKAppsManager: NSObject {
     /// Suppresses auto-reconnect while closing the previous Peertalk link during sim ↔ USB connect.
     private var intentionalSessionChange = false
     private let disposeBag = DisposeBag()
+    private var autoReconnectDisposeBag = DisposeBag()
+
+    private static let autoReconnectMaxAttempts = 10
+    private static let autoReconnectIntervalSec: RxTimeInterval = .seconds(3)
 
     private let switchStatusRelay = BehaviorRelay<SwitchStatus>(value: .idle)
     public var switchStatusObservable: Observable<SwitchStatus> { switchStatusRelay.asObservable() }
@@ -359,6 +365,7 @@ public final class LKAppsManager: NSObject {
 
     /// Ends the current inspect session and closes Peertalk so the demo can accept a new client.
     public func endInspectingSession() {
+        autoReconnectDisposeBag = DisposeBag()
         LKStaticAsyncUpdateManager.sharedInstance.endUpdating()
         inspectingApp?.cancelHierarchyDetailFetching()
         let channel = inspectingApp?.channel
@@ -710,33 +717,60 @@ public final class LKAppsManager: NSObject {
     private func setupAutoReconnect() {
         LKConnectionManager.sharedInstance.channelWillEnd
             .subscribe(with: self) { owner, channel in
-                if owner.intentionalSessionChange {
-                    return
-                }
-                guard channel === owner.inspectingApp?.channel else {
-                    return
-                }
+                if owner.intentionalSessionChange { return }
+                // Guard against spurious triggers during manual app switching.
+                if owner.switchStatusRelay.value.isConnecting { return }
+                guard channel === owner.inspectingApp?.channel else { return }
 
-                NSLog("current connection end")
+                NSLog("LookinClient - connection dropped, starting auto-reconnect")
 
                 let targetSession = owner.inspectingApp
                 owner.inspectingApp = nil
-
-                LKReactiveBridge.interval(
-                    seconds: 3,
-                    until: owner.willConnectToAppRelay.map { _ in () }
-                )
-                .flatMap { _ -> Single<LKInspectableApp> in
-                    owner.fetchInspectableApp(matching: targetSession)
-                }
-                .subscribe(with: owner) { owner, newApp in
-                    NSLog("Reconnected successfully.")
-                    owner.inspectingApp = newApp
-                    owner.didAutoReconnectSuccRelay.accept(())
-                }
-                .disposed(by: owner.disposeBag)
+                owner.startAutoReconnectLoop(for: targetSession)
             }
             .disposed(by: disposeBag)
+    }
+
+    private func startAutoReconnectLoop(for session: LKInspectableApp?) {
+        autoReconnectDisposeBag = DisposeBag()
+
+        // Stop signal: fires when the user initiates a new manual connection.
+        let stopSignal: Observable<Void> = willConnectToAppRelay.map { _ in () }
+
+        let onReconnected: (LKInspectableApp) -> Void = { [weak self] newApp in
+            guard let self else { return }
+            NSLog("LookinClient - auto-reconnect succeeded")
+            self.inspectingApp = newApp
+            self.didAutoReconnectSuccRelay.accept(())
+        }
+
+        // Fast path: server signals Peertalk is ready — skip the 3s wait.
+        LKConnectionManager.sharedInstance.didReceivePush
+            .filter { ($0.second as? NSNumber)?.uint32Value == LookinWirePushTypes.serverReady }
+            .take(until: stopSignal)
+            .flatMapLatest { [weak self] _ -> Observable<LKInspectableApp> in
+                guard let self else { return .empty() }
+                return self.fetchInspectableApp(matching: session)
+                    .asObservable()
+                    .catch { _ in .empty() }
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: onReconnected)
+            .disposed(by: autoReconnectDisposeBag)
+
+        // Polling path: retry every 3s, bounded to maxAttempts to avoid infinite limbo.
+        Observable<Int>.interval(Self.autoReconnectIntervalSec, scheduler: MainScheduler.instance)
+            .take(Self.autoReconnectMaxAttempts)
+            .take(until: stopSignal)
+            .flatMapLatest { [weak self] _ -> Observable<LKInspectableApp> in
+                guard let self else { return .empty() }
+                return self.fetchInspectableApp(matching: session)
+                    .asObservable()
+                    .catch { _ in .empty() }
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: onReconnected)
+            .disposed(by: autoReconnectDisposeBag)
     }
 
     private func fetchInspectableApp(matching session: LKInspectableApp?) -> Single<LKInspectableApp> {
@@ -756,6 +790,5 @@ public final class LKAppsManager: NSObject {
                 targetApp.appInfo?.appIcon = appInfo.appIcon
                 return .just(targetApp)
             }
-            .catch { _ in .never() }
     }
 }
