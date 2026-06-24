@@ -718,8 +718,9 @@ public final class LKAppsManager: NSObject {
         LKConnectionManager.sharedInstance.channelWillEnd
             .subscribe(with: self) { owner, channel in
                 if owner.intentionalSessionChange { return }
-                // Guard against spurious triggers during manual app switching.
-                if owner.switchStatusRelay.value.isConnecting { return }
+                // Suppress during any busy state (.fetchingAppList or .connecting): those flows
+                // release channels intentionally and will restore the session themselves.
+                if owner.switchStatusRelay.value.isBusy { return }
                 guard channel === owner.inspectingApp?.channel else { return }
 
                 NSLog("LookinClient - connection dropped, starting auto-reconnect")
@@ -737,42 +738,33 @@ public final class LKAppsManager: NSObject {
         // Stop signal: fires when the user initiates a new manual connection.
         let stopSignal: Observable<Void> = willConnectToAppRelay.map { _ in () }
 
-        let onReconnected: (LKInspectableApp) -> Void = { [weak self] newApp in
-            guard let self else { return }
-            NSLog("LookinClient - auto-reconnect succeeded")
-            self.inspectingApp = newApp
-            self.didAutoReconnectSuccRelay.accept(())
-        }
-
-        // Fast path: server signals Peertalk is ready — skip the 3s wait.
-        // flatMap (not flatMapLatest): never cancel an in-flight fetchInspectableApp since
-        // fetchAppInfos holds a lock; cancelling before innerDisposable is assigned leaves
-        // the lock permanently held, blocking all subsequent fetchAppInfos calls.
-        LKConnectionManager.sharedInstance.didReceivePush
-            .filter { ($0.second as? NSNumber)?.uint32Value == LookinWirePushTypes.serverReady }
-            .take(until: stopSignal)
-            .flatMap { [weak self] _ -> Observable<LKInspectableApp> in
-                guard let self else { return .empty() }
-                return self.fetchInspectableApp(matching: session)
-                    .asObservable()
-                    .catch { _ in .empty() }
-            }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: onReconnected)
-            .disposed(by: autoReconnectDisposeBag)
-
-        // Polling path: retry every 3s, bounded to maxAttempts to avoid infinite limbo.
-        Observable<Int>.interval(Self.autoReconnectIntervalSec, scheduler: MainScheduler.instance)
+        // Merge polling ticks and serverReady pushes into one trigger stream.
+        // A single flatMap(maxConcurrent: 1) ensures at most one fetchInspectableApp runs at
+        // a time, preventing concurrent lock acquisitions in fetchAppInfos that could leave
+        // the lock held when the losing subscription is disposed by stopSignal.
+        let pollTrigger = Observable<Int>.interval(Self.autoReconnectIntervalSec, scheduler: MainScheduler.instance)
             .take(Self.autoReconnectMaxAttempts)
+            .map { _ in () }
+
+        let serverReadyTrigger = LKConnectionManager.sharedInstance.didReceivePush
+            .filter { ($0.second as? NSNumber)?.uint32Value == LookinWirePushTypes.serverReady }
+            .map { _ in () }
+
+        Observable.merge(pollTrigger, serverReadyTrigger)
             .take(until: stopSignal)
-            .flatMap { [weak self] _ -> Observable<LKInspectableApp> in
+            .flatMap(maxConcurrent: 1) { [weak self] _ -> Observable<LKInspectableApp> in
                 guard let self else { return .empty() }
                 return self.fetchInspectableApp(matching: session)
                     .asObservable()
                     .catch { _ in .empty() }
             }
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: onReconnected)
+            .subscribe(onNext: { [weak self] newApp in
+                guard let self else { return }
+                NSLog("LookinClient - auto-reconnect succeeded")
+                self.inspectingApp = newApp
+                self.didAutoReconnectSuccRelay.accept(())
+            })
             .disposed(by: autoReconnectDisposeBag)
     }
 
