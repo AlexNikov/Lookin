@@ -648,7 +648,16 @@ public final class LKAppsManager: NSObject {
 
                 return Single.zip(requestSingles)
                     .map { results in
-                        let apps = results.compactMap { $0 }
+                        // Deduplicate by appInfoIdentifier: multiple channels to the same iOS
+                        // process (auto-reconnect channel + launch-screen scan, or concurrent
+                        // Peertalk accepts during simulator swap) each return an identical App
+                        // response, producing duplicate tiles.  Keep the first per identifier.
+                        var seenIDs = Set<UInt>()
+                        let unwrapped: [LKInspectableApp] = results.compactMap { $0 }
+                        let apps = unwrapped.filter { app in
+                            guard let info = app.appInfo else { return true }
+                            return seenIDs.insert(info.appInfoIdentifier).inserted
+                        }
                         let usable = apps.filter { $0.serverVersionError == nil && $0.appInfo != nil }
                         if usable.isEmpty, !liveChannels.isEmpty {
                             let ports = liveChannels.map { String($0.targetPort) }.joined(separator: ",")
