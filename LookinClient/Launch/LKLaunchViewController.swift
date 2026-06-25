@@ -184,13 +184,19 @@ class LKLaunchViewController: LKBaseViewController {
         if !bypassMCPInProgressCheck && LKMCPClientDiagnostics.shared.isMcpOperationInProgress { return }
 
         cancelInFlightAppDiscoveryFetch()
-        LKConnectionTiming.shared.begin("launch.discover", attrs: ["fresh": forceFreshDiscovery, "autoEnter": autoEnter])
-        // Fresh-discover scans skip images: cold App responses with screenshots block the
-        // fetchAppInfosLock for 10-15 s, delaying concurrent MCP discover/select operations.
-        // Images are fetched on the next regular (non-fresh) poll ~2 s later from the server cache.
+        // While searching (no tiles yet) always skip images regardless of forceFreshDiscovery:
+        // a cold App response with screenshots blocks fetchAppInfosLock for 10-15 s, which
+        // stalls auto-enter significantly after a simulator swap or "Select App" from inspector.
+        // Once an app is found and tiles are displayed the next poll re-fetches with images from
+        // the server cache (cache is warm by then, response is fast).
+        let needImages = !appViews.isEmpty && !forceFreshDiscovery
+        LKConnectionTiming.shared.begin(
+            "launch.discover",
+            attrs: ["fresh": forceFreshDiscovery, "autoEnter": autoEnter, "img": needImages]
+        )
         appDiscoveryFetchDisposable = LookinRACSignalRx.observeMainThread(
             LKAppsManager.sharedInstance.fetchAppInfos(
-                withImage: !forceFreshDiscovery,
+                withImage: needImages,
                 localInfos: appInfos,
                 forceFreshDiscovery: forceFreshDiscovery
             )
