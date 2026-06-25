@@ -128,6 +128,9 @@ public final class LKMCPClientDiagnostics {
         if !lastDiscoverSummary.isEmpty {
             state["lastDiscover"] = lastDiscoverSummary
         }
+        if LKConnectionTiming.isEnabled {
+            state["lastTiming"] = LKConnectionTiming.shared.summary
+        }
         if nav.mcpUIMode == .launch, Thread.isMainThread {
             state["launchHealth"] = LKMCPLaunchHealth.snapshot()
         }

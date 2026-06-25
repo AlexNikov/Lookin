@@ -22,6 +22,7 @@ import Foundation
     func mcpSimulatorPeertalkPortProbe() -> [String: Any]
     func mcpWireV2PingSync(timeout: TimeInterval) -> [String: Any]
     func mcpReloadHierarchy()
+    func mcpToggleFastMode() -> Bool
     func mcpSelectHierarchyRowMacView(_ view: NSView) -> Bool
     func mcpIosPreviewState() -> [String: Any]?
     func mcpIosPreviewScreenshotPNG() -> Data?

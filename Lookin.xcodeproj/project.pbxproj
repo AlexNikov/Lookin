@@ -149,7 +149,7 @@
 		99E5F58B7C315A43869902E9 /* LookinMacMCP.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 14B9DAC805F150744F3A9F2D /* LookinMacMCP.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		9B809FB2E600B5295274AF6F /* LKPreferenceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CDE574B7CC6F5A1CA53F6BC /* LKPreferenceManager.swift */; };
 		9CA6CC85681E23545A559545 /* LKMCPConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404CBCBFEFBA7DA30B2DF3F6 /* LKMCPConstants.swift */; };
-		9F54AB96E4458630249CCE23 /* Pods_LookinClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDD1B57BBB57A579B3B94684 /* Pods_LookinClient.framework */; };
+		9E4AC30730AF2D8D9C7CC282 /* LKConnectionTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6176DD606BD93957E072AF5F /* LKConnectionTiming.swift */; };
 		A31BAC5CDF51AD88F5852A35 /* LKReadHierarchyController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04E81B5F64B11CD0E0F24A6B /* LKReadHierarchyController.swift */; };
 		A41D18081792E0CCD173B1A9 /* LookinRACSignalRx.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9295947986A8D57714A75984 /* LookinRACSignalRx.swift */; };
 		A54AF40A3B32B5CA92D853FE /* LKStaticWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A8BC952BD35215C8F452CD /* LKStaticWindowController.swift */; };
@@ -158,7 +158,6 @@
 		A6EB2C7EB70E295D8D65404E /* LookinMacMCP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 14B9DAC805F150744F3A9F2D /* LookinMacMCP.framework */; };
 		A9DE2A962071740E29FB7D42 /* LKPreviewStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0068941A92C9B2B8C191A31 /* LKPreviewStageView.swift */; };
 		A9FCF55016EB1B2FC2032B01 /* LKStaticWindowController+MCPAppSwitcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = EED1D3862906849F3444AD55 /* LKStaticWindowController+MCPAppSwitcher.swift */; };
-		AACD1325E8C6E63BCB1DB367 /* Pods_LookinClientUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 332C701B3C48B50C31B13510 /* Pods_LookinClientUITests.framework */; };
 		ACEFF4429CB9D1750B1DA968 /* LKHierarchyDataSource+ColorMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A95117F63C942862C029B376 /* LKHierarchyDataSource+ColorMenu.swift */; };
 		AE5EBF3A5F31D51112A3E472 /* LKDashboardAttributeGeometryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A7F8FECDD92B6C3089D002D /* LKDashboardAttributeGeometryViews.swift */; };
 		AEA26E9BAF343D84177F1376 /* LKTableRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD44EB0D46E94FC6FF4AD374 /* LKTableRowView.swift */; };
@@ -207,6 +206,7 @@
 		D8947035E3207D056DC385C9 /* LKReadHierarchyDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D9DD43081EF2E9AE426654F /* LKReadHierarchyDataSource.swift */; };
 		D90C6815C50D4C3A9EEFDA89 /* LKMeasureTutorialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6644092E75F9BBDCA2997D7C /* LKMeasureTutorialView.swift */; };
 		DA5FDFAE70E56C625027C8E6 /* LKConsoleSelectPopoverController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F823192079D51056E60C696E /* LKConsoleSelectPopoverController.swift */; };
+		DAC3A562E673BE9EB1560465 /* Pods_LookinClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27142F1D40166A01FE911CE7 /* Pods_LookinClient.framework */; };
 		DB39DA0A2ED5D27F43AA37F8 /* LKDashboardAttributeTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5C1E6B066B23C48A82CF0E2 /* LKDashboardAttributeTextView.swift */; };
 		DD999C59F73FA286CA51A8C3 /* LKTableViewHorizontalScrollWidthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D16565E5711E3057CADB610 /* LKTableViewHorizontalScrollWidthManager.swift */; };
 		DE7C2C5DFD4BF0CA4DA805AF /* LKConnectionManager+Requests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3960D903497231A48328ABEE /* LKConnectionManager+Requests.swift */; };
@@ -235,6 +235,7 @@
 		F8449AF05203E58166B4CFC1 /* LKHierarchyDataSource+Expansion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A56D97ECBDE1818E3513E9 /* LKHierarchyDataSource+Expansion.swift */; };
 		F8ED52829DE9B0C0607F415E /* LKPerformanceReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD718C6BD24453C3CCDA48D9 /* LKPerformanceReporter.swift */; };
 		F94DF1FC77EFD678A8123F04 /* LKDashboardAttributeStringArrayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9759D67F5BCE71EA49EC743B /* LKDashboardAttributeStringArrayView.swift */; };
+		F9D2C1ACC15382A96FACBDA7 /* Pods_LookinClientUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7E2C2B50F3175D458653BAA7 /* Pods_LookinClientUITests.framework */; };
 		F9F9DC18336121FA776B77BE /* LKDashboardAttributeEnumsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFBDDC8BA0CB64F73DFB365 /* LKDashboardAttributeEnumsView.swift */; };
 		FBB940F529835E9B16783A7C /* LKTextsMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 021265C0D65EA663FC455B67 /* LKTextsMenuView.swift */; };
 		FC6A86441AE4D21F0AD701A5 /* LKPreferenceSwitchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 678E83411217BB99C67B5A19 /* LKPreferenceSwitchView.swift */; };
@@ -301,7 +302,7 @@
 		20BD3838B11DECA34DDBC382 /* NSPointerArray+LookinClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSPointerArray+LookinClient.swift"; sourceTree = "<group>"; };
 		21EB6C613E0FDE734BB362E6 /* LKDashboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardViewController.swift; sourceTree = "<group>"; };
 		234B999DAF435D6A7B910F1A /* LKDebugEventLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDebugEventLog.swift; sourceTree = "<group>"; };
-		2586F60E2997FAF8BCF25E36 /* Pods-LookinClientUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClientUITests.debug.xcconfig"; path = "Target Support Files/Pods-LookinClientUITests/Pods-LookinClientUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		27142F1D40166A01FE911CE7 /* Pods_LookinClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LookinClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		27F6A0A2C5CB6482473E06A2 /* LKOsAppMCPDataSourceSwiftBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKOsAppMCPDataSourceSwiftBridge.swift; sourceTree = "<group>"; };
 		2878495DC2C48537763CD3AD /* LKWireScreenshotCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKWireScreenshotCoordinator.swift; sourceTree = "<group>"; };
 		2961B16EB870CC8DF56665E1 /* LKReadViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKReadViewController.swift; sourceTree = "<group>"; };
@@ -315,7 +316,6 @@
 		31BEF2B4D4525C1F3F0CA031 /* LKLogsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKLogsViewController.swift; sourceTree = "<group>"; };
 		32330FACDEE6FFE43F819DFD /* LKPreferencePopupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKPreferencePopupView.swift; sourceTree = "<group>"; };
 		3246CC87E3D0834A086254DB /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-		332C701B3C48B50C31B13510 /* Pods_LookinClientUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LookinClientUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3374D92ED0744C84BCA7677A /* LKAttrString+Conversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LKAttrString+Conversion.swift"; sourceTree = "<group>"; };
 		33EEEC10D94C6D781A0FAA36 /* LKDisplayItemNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDisplayItemNode.swift; sourceTree = "<group>"; };
 		352BFC81E4B2E75AE07A638C /* CwlDemangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CwlDemangle.swift; sourceTree = "<group>"; };
@@ -338,9 +338,9 @@
 		4504F0DA960DCBD6565F8168 /* LKColorIndicatorLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKColorIndicatorLayer.swift; sourceTree = "<group>"; };
 		4699F68D9BD5C1D0D4A3E7ED /* LKAboutWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKAboutWindowController.swift; sourceTree = "<group>"; };
 		48AD435F1DE57759C828C297 /* LKOutlineItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKOutlineItem.swift; sourceTree = "<group>"; };
-		493B67F8EC22FE5DEFABB4CF /* Pods-LookinClient.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClient.release.xcconfig"; path = "Target Support Files/Pods-LookinClient/Pods-LookinClient.release.xcconfig"; sourceTree = "<group>"; };
 		49A8639A8A1BA88630C34568 /* NSColor+LookinClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSColor+LookinClient.swift"; sourceTree = "<group>"; };
 		49B91C30B082AFFE6D92D217 /* LKDashboardAttributeJsonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardAttributeJsonView.swift; sourceTree = "<group>"; };
+		4A49258788969EE26F607D5F /* Pods-LookinClient.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClient.release.xcconfig"; path = "Target Support Files/Pods-LookinClient/Pods-LookinClient.release.xcconfig"; sourceTree = "<group>"; };
 		4AC4B3E2F4C7BD721AE1D60B /* LKInputSearchSuggestionWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKInputSearchSuggestionWindowController.swift; sourceTree = "<group>"; };
 		4B52D0FF1EC1C54C9F80E22F /* DanceScript.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = DanceScript.sh; sourceTree = "<group>"; };
 		4EA890A648D1C9E0CFDDE72F /* LKMCPLaunchHealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKMCPLaunchHealth.swift; sourceTree = "<group>"; };
@@ -361,6 +361,7 @@
 		60ADF93B854F5F8AADA0E1A6 /* LKWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKWindowController.swift; sourceTree = "<group>"; };
 		612D2DAD44570D65391AA7EB /* LKPreviewController+Gestures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LKPreviewController+Gestures.swift"; sourceTree = "<group>"; };
 		6174F8B6616979CCB1F64C40 /* LKPopPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKPopPanel.swift; sourceTree = "<group>"; };
+		6176DD606BD93957E072AF5F /* LKConnectionTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKConnectionTiming.swift; sourceTree = "<group>"; };
 		623E836B53E9ABF9F393EAD6 /* LKAttrString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKAttrString.swift; sourceTree = "<group>"; };
 		63E8BB9C84FA2F9C832BE421 /* AppDelegate+LookinMacMCP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+LookinMacMCP.swift"; sourceTree = "<group>"; };
 		646E007EBF6D83D851EC54B9 /* LKImageTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKImageTextView.swift; sourceTree = "<group>"; };
@@ -380,12 +381,12 @@
 		714E94DE05F72ECF1EF1926E /* LKDashboardAttributeSwitchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardAttributeSwitchView.swift; sourceTree = "<group>"; };
 		73C5C10E3BABC5AB714AF685 /* LKDashboardAttributeRelationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardAttributeRelationView.swift; sourceTree = "<group>"; };
 		76076092517A2967CEC43266 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/MainMenu.strings"; sourceTree = "<group>"; };
-		77C8B8F5A409811DF0BF24A9 /* Pods-LookinClient.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClient.debug.xcconfig"; path = "Target Support Files/Pods-LookinClient/Pods-LookinClient.debug.xcconfig"; sourceTree = "<group>"; };
 		785DD0A270A7F9A86809C99B /* LKTipsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKTipsView.swift; sourceTree = "<group>"; };
 		7BA386B895ADF4E51ECF336D /* LKDashboardAttributeColorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardAttributeColorView.swift; sourceTree = "<group>"; };
 		7C2400C88911FFD15A3D8F17 /* LKDashboardCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardCardView.swift; sourceTree = "<group>"; };
 		7D9DD43081EF2E9AE426654F /* LKReadHierarchyDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKReadHierarchyDataSource.swift; sourceTree = "<group>"; };
 		7E18A3876E3752D98CD4BEC9 /* LKNavigationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKNavigationManager.swift; sourceTree = "<group>"; };
+		7E2C2B50F3175D458653BAA7 /* Pods_LookinClientUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LookinClientUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7E7812BFC5E7CEC979E4794A /* LKNSView+Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LKNSView+Layout.swift"; sourceTree = "<group>"; };
 		807A829D08227A51112475AA /* LKHierarchyItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKHierarchyItem.swift; sourceTree = "<group>"; };
 		837DD05ADB624485EB310080 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -418,6 +419,7 @@
 		98D65FFB2B5897DA7C589427 /* LKJSONAttributeContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKJSONAttributeContentView.swift; sourceTree = "<group>"; };
 		99724178258372FCA0A15D7F /* LKProgressIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKProgressIndicatorView.swift; sourceTree = "<group>"; };
 		9A767C05B5EFB855C0FCC20B /* LKImageControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKImageControl.swift; sourceTree = "<group>"; };
+		9B342D9CED539EAD1C7B7945 /* Pods-LookinClientUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClientUITests.debug.xcconfig"; path = "Target Support Files/Pods-LookinClientUITests/Pods-LookinClientUITests.debug.xcconfig"; sourceTree = "<group>"; };
 		9F9FEBE0D437E784154F0F70 /* LKHierarchyHandlersPopoverItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKHierarchyHandlersPopoverItemView.swift; sourceTree = "<group>"; };
 		9FFB22D83AFFA8C4EC67DE3B /* LookinClient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LookinClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00AAC560060CAD24E8636F3 /* LKStaticHierarchyController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKStaticHierarchyController.swift; sourceTree = "<group>"; };
@@ -445,6 +447,7 @@
 		B87A07B8C91293ADCA15C9B3 /* LKConsoleDataSourceRowItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKConsoleDataSourceRowItem.swift; sourceTree = "<group>"; };
 		B8D32B7034CCB443AA2C9428 /* LKExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKExportManager.swift; sourceTree = "<group>"; };
 		B8E0A690191A92BA9CC4D4C7 /* LKHierarchyHandlersPopoverController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKHierarchyHandlersPopoverController.swift; sourceTree = "<group>"; };
+		B9AAEA8987165D57B3529D00 /* Pods-LookinClientUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClientUITests.release.xcconfig"; path = "Target Support Files/Pods-LookinClientUITests/Pods-LookinClientUITests.release.xcconfig"; sourceTree = "<group>"; };
 		BD76380FCECEB0BD3FEA84D9 /* LKOsAppMCPHTTPModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKOsAppMCPHTTPModels.swift; sourceTree = "<group>"; };
 		BDB5061BFB1AEC056DDA158F /* LKTwoColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKTwoColors.swift; sourceTree = "<group>"; };
 		BF12D1F8E9902149C7FAFBB3 /* LKOsAppMCPHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LKOsAppMCPHandler.m; sourceTree = "<group>"; };
@@ -465,7 +468,6 @@
 		CC65E9C0B95B0BFC3984F36C /* LKHierarchyController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKHierarchyController.swift; sourceTree = "<group>"; };
 		CC9F2516DEADEBDC9BA0F2D6 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		CD04E04DECC5839B59BC50BF /* LKWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKWindow.swift; sourceTree = "<group>"; };
-		CD3C7B804C0C8B877015883D /* Pods-LookinClientUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClientUITests.release.xcconfig"; path = "Target Support Files/Pods-LookinClientUITests/Pods-LookinClientUITests.release.xcconfig"; sourceTree = "<group>"; };
 		CD718C6BD24453C3CCDA48D9 /* LKPerformanceReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKPerformanceReporter.swift; sourceTree = "<group>"; };
 		CF0431D462E8EE16691F095B /* LKReloadItemAndChildrenUpdateTaskMaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKReloadItemAndChildrenUpdateTaskMaker.swift; sourceTree = "<group>"; };
 		D0068941A92C9B2B8C191A31 /* LKPreviewStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKPreviewStageView.swift; sourceTree = "<group>"; };
@@ -482,8 +484,8 @@
 		D7A8BC952BD35215C8F452CD /* LKStaticWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKStaticWindowController.swift; sourceTree = "<group>"; };
 		DA30E2E08A8CB85FC9B0257A /* LKOsAppMCPServer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LKOsAppMCPServer.h; sourceTree = "<group>"; };
 		DBA9D8B942EC490031A850D3 /* LKMenuPopoverSettingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKMenuPopoverSettingController.swift; sourceTree = "<group>"; };
-		DDD1B57BBB57A579B3B94684 /* Pods_LookinClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LookinClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DDD98D8E0223D340A9DBBC06 /* LookinMacMCPDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LookinMacMCPDataSource.swift; sourceTree = "<group>"; };
+		DF1BB965E1F2CBE9C9E9A341 /* Pods-LookinClient.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LookinClient.debug.xcconfig"; path = "Target Support Files/Pods-LookinClient/Pods-LookinClient.debug.xcconfig"; sourceTree = "<group>"; };
 		E0EEF92A349BF4451A849B6F /* LKMCPTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKMCPTiming.swift; sourceTree = "<group>"; };
 		E31DFCB7A9339E1FD4BD9E3B /* LKReadWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKReadWindowController.swift; sourceTree = "<group>"; };
 		E4319B6E41471DCCC6CE9070 /* LKDashboardAttributeClassView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LKDashboardAttributeClassView.swift; sourceTree = "<group>"; };
@@ -527,15 +529,15 @@
 			files = (
 				A6EB2C7EB70E295D8D65404E /* LookinMacMCP.framework in Frameworks */,
 				E7402447427D7DE4D86ACEB4 /* Security.framework in Frameworks */,
-				9F54AB96E4458630249CCE23 /* Pods_LookinClient.framework in Frameworks */,
+				DAC3A562E673BE9EB1560465 /* Pods_LookinClient.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		E79A6A4A8E464A2065DCB5FA /* Frameworks */ = {
+		73C28EAE36E80C7AA9E515D4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AACD1325E8C6E63BCB1DB367 /* Pods_LookinClientUITests.framework in Frameworks */,
+				F9D2C1ACC15382A96FACBDA7 /* Pods_LookinClientUITests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -629,8 +631,8 @@
 			isa = PBXGroup;
 			children = (
 				CC9F2516DEADEBDC9BA0F2D6 /* Security.framework */,
-				DDD1B57BBB57A579B3B94684 /* Pods_LookinClient.framework */,
-				332C701B3C48B50C31B13510 /* Pods_LookinClientUITests.framework */,
+				27142F1D40166A01FE911CE7 /* Pods_LookinClient.framework */,
+				7E2C2B50F3175D458653BAA7 /* Pods_LookinClientUITests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -666,6 +668,7 @@
 				382C7E0445B16BE29C933390 /* LKBaseView.swift */,
 				1741FAB9800DF40D583AB6C4 /* LKBaseViewController.swift */,
 				4504F0DA960DCBD6565F8168 /* LKColorIndicatorLayer.swift */,
+				6176DD606BD93957E072AF5F /* LKConnectionTiming.swift */,
 				234B999DAF435D6A7B910F1A /* LKDebugEventLog.swift */,
 				9A767C05B5EFB855C0FCC20B /* LKImageControl.swift */,
 				646E007EBF6D83D851EC54B9 /* LKImageTextView.swift */,
@@ -746,10 +749,10 @@
 			isa = PBXGroup;
 			children = (
 				4F3A2853E3B0D5BBD2C78AA1 /* Target Support Files */,
-				77C8B8F5A409811DF0BF24A9 /* Pods-LookinClient.debug.xcconfig */,
-				493B67F8EC22FE5DEFABB4CF /* Pods-LookinClient.release.xcconfig */,
-				2586F60E2997FAF8BCF25E36 /* Pods-LookinClientUITests.debug.xcconfig */,
-				CD3C7B804C0C8B877015883D /* Pods-LookinClientUITests.release.xcconfig */,
+				DF1BB965E1F2CBE9C9E9A341 /* Pods-LookinClient.debug.xcconfig */,
+				4A49258788969EE26F607D5F /* Pods-LookinClient.release.xcconfig */,
+				9B342D9CED539EAD1C7B7945 /* Pods-LookinClientUITests.debug.xcconfig */,
+				B9AAEA8987165D57B3529D00 /* Pods-LookinClientUITests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -1089,13 +1092,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = A70CE49012A7D9770D1A9595 /* Build configuration list for PBXNativeTarget "LookinClient" */;
 			buildPhases = (
-				95D657FFF1592AF82C64E212 /* [CP] Check Pods Manifest.lock */,
+				64C0D6153FED8703D111C584 /* [CP] Check Pods Manifest.lock */,
 				9F215BD0C28690FEDB281A6D /* Sources */,
 				87A0BC58E0C61E9F22A590F8 /* Resources */,
 				1382687FA37B2468F6CF3744 /* Frameworks */,
 				628F7E6E83D0128E19D4962C /* Embed Frameworks */,
-				2EB0651255D6F719712C31FF /* [CP] Embed Pods Frameworks */,
-				E6CBB058B94FB1826E7B0D1E /* [CP] Copy Pods Resources */,
+				4102AE0B70DC8E023149C754 /* [CP] Embed Pods Frameworks */,
+				B444559E3D86050696D965B5 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -1111,9 +1114,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = ED661F2008A46475E037CDD5 /* Build configuration list for PBXNativeTarget "LookinClientUITests" */;
 			buildPhases = (
-				6C8A0A98826281EC2237DB4D /* [CP] Check Pods Manifest.lock */,
+				E9D4F78E311ECB88C3637EEC /* [CP] Check Pods Manifest.lock */,
 				E3E20E661EE98D142E13C503 /* Sources */,
-				E79A6A4A8E464A2065DCB5FA /* Frameworks */,
+				73C28EAE36E80C7AA9E515D4 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -1197,7 +1200,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		2EB0651255D6F719712C31FF /* [CP] Embed Pods Frameworks */ = {
+		4102AE0B70DC8E023149C754 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1214,29 +1217,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		6C8A0A98826281EC2237DB4D /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-LookinClientUITests-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		95D657FFF1592AF82C64E212 /* [CP] Check Pods Manifest.lock */ = {
+		64C0D6153FED8703D111C584 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1258,7 +1239,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		E6CBB058B94FB1826E7B0D1E /* [CP] Copy Pods Resources */ = {
+		B444559E3D86050696D965B5 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1273,6 +1254,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-LookinClient/Pods-LookinClient-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		E9D4F78E311ECB88C3637EEC /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-LookinClientUITests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1317,6 +1320,7 @@
 				B9551E36CD2A1B0946C72F26 /* LKConnectionManager+WireV2.swift in Sources */,
 				035D9901A9B778AB48BB2307 /* LKConnectionManager.swift in Sources */,
 				D64A84E48D2C9F1961030BF9 /* LKConnectionRequest.swift in Sources */,
+				9E4AC30730AF2D8D9C7CC282 /* LKConnectionTiming.swift in Sources */,
 				BDA53753BA1D7868163B714B /* LKConsoleDataSource.swift in Sources */,
 				C831033162D3D73D6725453F /* LKConsoleDataSourceRowItem.swift in Sources */,
 				1DD57E59462858B75E004895 /* LKConsoleInputRowView.swift in Sources */,
@@ -1549,7 +1553,7 @@
 /* Begin XCBuildConfiguration section */
 		09728E7C77A6A9D82C63EE79 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2586F60E2997FAF8BCF25E36 /* Pods-LookinClientUITests.debug.xcconfig */;
+			baseConfigurationReference = 9B342D9CED539EAD1C7B7945 /* Pods-LookinClientUITests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "-";
@@ -1604,7 +1608,7 @@
 		};
 		54318736379850D8D14A58C7 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 493B67F8EC22FE5DEFABB4CF /* Pods-LookinClient.release.xcconfig */;
+			baseConfigurationReference = 4A49258788969EE26F607D5F /* Pods-LookinClient.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = LookinClient/Lookin.entitlements;
@@ -1679,7 +1683,7 @@
 		};
 		8B7DC726D2AB4C17A17E6B5F /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CD3C7B804C0C8B877015883D /* Pods-LookinClientUITests.release.xcconfig */;
+			baseConfigurationReference = B9AAEA8987165D57B3529D00 /* Pods-LookinClientUITests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "-";
@@ -1769,7 +1773,7 @@
 		};
 		9C10936A6FB288700D174036 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 77C8B8F5A409811DF0BF24A9 /* Pods-LookinClient.debug.xcconfig */;
+			baseConfigurationReference = DF1BB965E1F2CBE9C9E9A341 /* Pods-LookinClient.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = LookinClient/Lookin.entitlements;

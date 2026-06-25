@@ -80,6 +80,10 @@ final class LKOsAppMCPDataSourceSwiftBridge: NSObject, LKOsAppMCPDataSource {
         swift?.mcpReloadHierarchy()
     }
 
+    func mcp_toggleFastMode() -> Bool {
+        swift?.mcpToggleFastMode() ?? false
+    }
+
     func mcp_selectHierarchyRowMacView(_ view: NSView) -> Bool {
         swift?.mcpSelectHierarchyRowMacView(view) ?? false
     }

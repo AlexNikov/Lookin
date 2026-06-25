@@ -142,6 +142,19 @@ extension AppDelegate: LookinMacMCPDataSource {
         LKNavigationManager.sharedInstance.staticWindowController?.mcpForceReload()
     }
 
+    func mcpToggleFastMode() -> Bool {
+        mcpOnMain {
+            let manager = LKPreferenceMain()
+            manager.fastMode = !manager.fastMode
+            LKConnectionTiming.shared.recordInstant(
+                "fastMode.toggle",
+                durationMs: 0,
+                attrs: ["enabled": manager.fastMode, "source": "mcp"]
+            )
+            return manager.fastMode
+        }
+    }
+
     func mcpSelectHierarchyRowMacView(_ view: NSView) -> Bool {
         var candidate: NSView? = view
         while let current = candidate {

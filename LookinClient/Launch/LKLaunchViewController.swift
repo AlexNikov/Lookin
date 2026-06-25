@@ -175,17 +175,31 @@ class LKLaunchViewController: LKBaseViewController {
         })
     }
 
-    private func reloadWithAutoEntering(_ autoEnter: Bool, bypassMCPInProgressCheck: Bool = false) {
+    private func reloadWithAutoEntering(
+        _ autoEnter: Bool,
+        bypassMCPInProgressCheck: Bool = false,
+        forceFreshDiscovery: Bool = false
+    ) {
         if isEnteringApp { return }
         if !bypassMCPInProgressCheck && LKMCPClientDiagnostics.shared.isMcpOperationInProgress { return }
 
         cancelInFlightAppDiscoveryFetch()
+        LKConnectionTiming.shared.begin("launch.discover", attrs: ["fresh": forceFreshDiscovery, "autoEnter": autoEnter])
+        // Fresh-discover scans skip images: cold App responses with screenshots block the
+        // fetchAppInfosLock for 10-15 s, delaying concurrent MCP discover/select operations.
+        // Images are fetched on the next regular (non-fresh) poll ~2 s later from the server cache.
         appDiscoveryFetchDisposable = LookinRACSignalRx.observeMainThread(
-            LKAppsManager.sharedInstance.fetchAppInfos(withImage: true, localInfos: appInfos)
+            LKAppsManager.sharedInstance.fetchAppInfos(
+                withImage: !forceFreshDiscovery,
+                localInfos: appInfos,
+                forceFreshDiscovery: forceFreshDiscovery
+            )
         )
         .subscribe(with: self, onSuccess: { owner, apps in
+            LKConnectionTiming.shared.end("launch.discover", attrs: ["count": apps.count])
             owner.handleFetchedApps(apps, autoEnter: autoEnter)
         }, onFailure: { owner, _ in
+            LKConnectionTiming.shared.end("launch.discover", attrs: ["error": true])
             owner.handleFetchedApps([], autoEnter: autoEnter)
         })
     }
@@ -248,7 +262,8 @@ class LKLaunchViewController: LKBaseViewController {
                 return
             }
             // Auto-enter only before any tile is shown; deferUSB in handleFetchedApps waits for USB demo.
-            self.reloadWithAutoEntering(self.appViews.isEmpty)
+            let forceFresh = self.appDiscoveryPollCount % 3 == 0
+            self.reloadWithAutoEntering(self.appViews.isEmpty, forceFreshDiscovery: forceFresh)
         }
         timer.resume()
         appDiscoveryTimer = timer

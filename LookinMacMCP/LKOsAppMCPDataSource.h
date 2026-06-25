@@ -22,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mcp_clearEventLog;
 /// Trigger a hierarchy reload from the connected iOS app (equivalent to pressing the Reload toolbar button).
 - (void)mcp_reloadHierarchy;
+/// Toggle fast mode toolbar state. Returns new enabled value.
+- (BOOL)mcp_toggleFastMode;
 /// Select the iOS display item for a mac hierarchy row view (or its subview). Returns NO if not a hierarchy row.
 - (BOOL)mcp_selectHierarchyRowMacView:(NSView *)view;
 /// iOS 3D preview state for ObjC vs Swift parity (planes, camera, dimension).

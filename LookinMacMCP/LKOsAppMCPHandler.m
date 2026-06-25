@@ -130,6 +130,9 @@ static SEL LKOsAppMCPSelMcpRowDisplayItem(void) {
     if ([method isEqualToString:@"POST"] && [pathOnly isEqualToString:@"/action/reload"]) {
         return [self handleReloadHierarchy:statusCode];
     }
+    if ([method isEqualToString:@"POST"] && [pathOnly isEqualToString:@"/action/toggle-fast-mode"]) {
+        return [self handleToggleFastMode:statusCode];
+    }
     if ([method isEqualToString:@"GET"] && [pathOnly isEqualToString:@"/ui/preview/state"]) {
         return [self handlePreviewState:statusCode];
     }
@@ -1432,6 +1435,16 @@ static SEL LKOsAppMCPSelMcpRowDisplayItem(void) {
     [_dataSource mcp_reloadHierarchy];
     *statusCode = 200;
     return [self successJSON:@{@"triggered": @YES}];
+}
+
+- (NSData *)handleToggleFastMode:(NSInteger *)statusCode {
+    if (![_dataSource respondsToSelector:@selector(mcp_toggleFastMode)]) {
+        *statusCode = 501;
+        return [self errorJSON:@"Not implemented by this version"];
+    }
+    BOOL enabled = [_dataSource mcp_toggleFastMode];
+    *statusCode = 200;
+    return [self successJSON:@{@"fastMode": @(enabled)}];
 }
 
 - (NSData *)handlePreviewState:(NSInteger *)statusCode {

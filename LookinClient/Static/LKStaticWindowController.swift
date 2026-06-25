@@ -252,6 +252,7 @@ final class LKStaticWindowController: LKWindowController, NSToolbarDelegate {
         isFetchingHierarchy = true
         viewController.progressView.animate(toProgress: InitialIndicatorProgressWhenFetchHierarchy)
         LKPerformanceReporter.sharedInstance.willStartReload()
+        LKConnectionTiming.shared.begin("reload.hierarchy")
 
         reloadHierarchyDisposable?.dispose()
         reloadHierarchyDisposable = LookinRACSignalRx.observeMainThread(
@@ -265,7 +266,9 @@ final class LKStaticWindowController: LKWindowController, NSToolbarDelegate {
             LKStaticHierarchyDataSource.sharedInstance.reload(with: info, keepState: true)
             owner.isFetchingHierarchy = false
             LKPerformanceReporter.sharedInstance.didFetchHierarchy()
+            LKConnectionTiming.shared.end("reload.hierarchy", attrs: ["flat": info.displayItems?.count ?? 0])
         }, onFailure: { owner, error in
+            LKConnectionTiming.shared.end("reload.hierarchy", attrs: ["error": true])
             let nsError = error as NSError
             if nsError.code != LKLookinClientErrors.discard().code {
                 owner.viewController.progressView.resetToZero()
@@ -311,8 +314,10 @@ final class LKStaticWindowController: LKWindowController, NSToolbarDelegate {
     }
 
     @objc private func handleFastMode() {
+        LKConnectionTiming.shared.begin("fastMode.toggle")
         let manager = LKPreferenceMain()
         manager.fastMode = !manager.fastMode
+        LKConnectionTiming.shared.end("fastMode.toggle", attrs: ["enabled": manager.fastMode])
     }
 
     @objc private func handleMessage(_ button: NSButton) {

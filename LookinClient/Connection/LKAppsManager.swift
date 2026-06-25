@@ -234,7 +234,12 @@ public final class LKAppsManager: NSObject {
         wantsUSB: Bool
     ) -> Single<(LKInspectableApp, LookinHierarchyInfo)> {
         let conn = LKConnectionManager.sharedInstance
-        return fetchAppInfos(withImage: false, localInfos: [targetInfo], usbOnly: wantsUSB)
+        return fetchAppInfos(
+            withImage: false,
+            localInfos: [targetInfo],
+            forceFreshDiscovery: true,
+            usbOnly: wantsUSB
+        )
             .flatMap { [weak self] apps -> Single<(LKInspectableApp, LookinHierarchyInfo)> in
                 guard let self else { return .error(LKLookinClientErrors.inner) }
                 let fresh = apps.first(where: { candidate in
@@ -343,6 +348,7 @@ public final class LKAppsManager: NSObject {
     private var intentionalSessionChange = false
     private let disposeBag = DisposeBag()
     private var autoReconnectDisposeBag = DisposeBag()
+    private var autoReconnectMissCount = 0
 
     private static let autoReconnectMaxAttempts = 40
     private static let autoReconnectIntervalSec: RxTimeInterval = .seconds(3)
@@ -498,8 +504,13 @@ public final class LKAppsManager: NSObject {
                 }
                 var innerDisposable: Disposable?
                 let work = DispatchWorkItem { [self] in
-                    Self.fetchLockAcquiredAt = Date().timeIntervalSince1970
+                    let lockWaitStart = CFAbsoluteTimeGetCurrent()
                     Self.fetchAppInfosLock.lock()
+                    if LKConnectionTiming.isEnabled {
+                        let waitMs = Int((CFAbsoluteTimeGetCurrent() - lockWaitStart) * 1000)
+                        LKConnectionTiming.shared.recordInstant("fetchAppInfos.waitLock", durationMs: waitMs)
+                    }
+                    Self.fetchLockAcquiredAt = Date().timeIntervalSince1970
                     innerDisposable = self.fetchAppInfosUnlocked(
                         withImage: needImages,
                         localInfos: localInfos,
@@ -555,6 +566,7 @@ public final class LKAppsManager: NSObject {
             localIdentifiers: localInfoIdentifiers.map(\.uintValue)
         )
 
+        LKConnectionTiming.shared.begin("discover.fetchAppInfos", attrs: ["fresh": forceFreshDiscovery])
         return LKConnectionManager.sharedInstance.tryToConnectAllPorts(forceFreshDiscovery: forceFreshDiscovery)
             .flatMap { connectedChannels -> Single<[LKInspectableApp]> in
                 let scopedChannels: [LKPeerChannel]
@@ -668,6 +680,17 @@ public final class LKAppsManager: NSObject {
                         return apps
                     }
             }
+            .do(
+                onSuccess: { apps in
+                    LKConnectionTiming.shared.end(
+                        "discover.fetchAppInfos",
+                        attrs: ["usable": Self.usableInspectableApps(from: apps).count]
+                    )
+                },
+                onError: { _ in
+                    LKConnectionTiming.shared.end("discover.fetchAppInfos", attrs: ["error": true])
+                }
+            )
     }
 
     private static func inspectableApp(
@@ -728,9 +751,13 @@ public final class LKAppsManager: NSObject {
                 guard channel === owner.inspectingApp?.channel else { return }
 
                 NSLog("LookinClient - connection dropped, starting auto-reconnect")
+                if LKConnectionManager.sharedInstance.isSimulatorPeertalkPort(channel.targetPort) {
+                    LKConnectionManager.invalidateBootedSimulatorCache()
+                }
 
                 let targetSession = owner.inspectingApp
                 owner.inspectingApp = nil
+                owner.autoReconnectMissCount = 0
                 owner.startAutoReconnectLoop(for: targetSession)
             }
             .disposed(by: disposeBag)
@@ -758,9 +785,25 @@ public final class LKAppsManager: NSObject {
             .take(until: stopSignal)
             .flatMapFirst { [weak self] _ -> Observable<LKInspectableApp> in
                 guard let self else { return .empty() }
-                return self.fetchInspectableApp(matching: session)
+                self.autoReconnectMissCount += 1
+                // Use fresh discover immediately: after a channel drop the old Peertalk
+                // binding is gone, so a normal purge-and-reuse (attempt 1) would just
+                // re-scan dead ports.  Fresh discover sends relisten and rescans right away.
+                let useFresh = self.autoReconnectMissCount >= 1
+                LKConnectionTiming.shared.begin(
+                    "autoReconnect.attempt",
+                    attrs: ["attempt": self.autoReconnectMissCount, "fresh": useFresh]
+                )
+                return self.fetchInspectableApp(matching: session, forceFreshDiscovery: useFresh)
                     .timeout(Self.autoReconnectFetchTimeoutSec, scheduler: MainScheduler.instance)
                     .asObservable()
+                    .do(onNext: { [weak self] _ in
+                        LKConnectionTiming.shared.end("autoReconnect.attempt", attrs: ["ok": true])
+                        self?.autoReconnectMissCount = 0
+                    }, onError: { [weak self] _ in
+                        LKConnectionTiming.shared.end("autoReconnect.attempt", attrs: ["ok": false])
+                        _ = self?.autoReconnectMissCount
+                    })
                     .catch { _ in .empty() }
             }
             .observe(on: MainScheduler.instance)
@@ -773,12 +816,20 @@ public final class LKAppsManager: NSObject {
             .disposed(by: autoReconnectDisposeBag)
     }
 
-    private func fetchInspectableApp(matching session: LKInspectableApp?) -> Single<LKInspectableApp> {
+    private func fetchInspectableApp(
+        matching session: LKInspectableApp?,
+        forceFreshDiscovery: Bool = false
+    ) -> Single<LKInspectableApp> {
         guard let session, let appInfo = session.appInfo else {
             return .error(LKLookinClientErrors.inner)
         }
         let wasUSB = Self.inspectSessionUsesUSB(session)
-        return fetchAppInfos(withImage: false, localInfos: [appInfo], usbOnly: wasUSB)
+        return fetchAppInfos(
+            withImage: false,
+            localInfos: [appInfo],
+            forceFreshDiscovery: forceFreshDiscovery,
+            usbOnly: wasUSB
+        )
             .flatMap { allApps -> Single<LKInspectableApp> in
                 let conn = LKConnectionManager.sharedInstance
                 guard let targetApp = allApps.first(where: { candidate in

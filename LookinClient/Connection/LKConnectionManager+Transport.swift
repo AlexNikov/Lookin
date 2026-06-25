@@ -26,6 +26,10 @@ extension LKConnectionManager {
     private static var lastIOSRelistenRequestAt: TimeInterval = 0
     private static var bootedSimulatorCache: (value: Bool, at: TimeInterval)?
 
+    static func invalidateBootedSimulatorCache() {
+        bootedSimulatorCache = nil
+    }
+
     // MARK: - Ports Connect
 
     /// Closes all cached discovery transports (launch-screen rescan after leaving inspector).
@@ -60,6 +64,7 @@ extension LKConnectionManager {
 
     /// Clears cached Peertalk channels and closes the transport (e.g. when leaving the inspector).
     public func releaseCachedChannel(_ channel: LKPeerChannel) {
+        let wasSimulator = isSimulatorPeertalkPort(channel.targetPort)
         for port in allSimulatorPorts where port.connectedChannel === channel {
             port.connectedChannel = nil
         }
@@ -71,9 +76,14 @@ extension LKConnectionManager {
         } else {
             channel.close()
         }
+        if wasSimulator {
+            Self.invalidateBootedSimulatorCache()
+        }
     }
 
     private func purgeDisconnectedCachedChannels() async {
+        LKConnectionTiming.shared.begin("connect.purge")
+        defer { LKConnectionTiming.shared.end("connect.purge") }
         for port in allSimulatorPorts {
             guard let channel = port.connectedChannel else { continue }
             if let async = channel as? LKAsyncPeerChannel {
@@ -99,6 +109,7 @@ extension LKConnectionManager {
 
     /// Drops cached Peertalk transports and asks iOS to relisten (needed after switching simulator demo).
     public func prepareForAppRediscovery() {
+        Self.invalidateBootedSimulatorCache()
         nudgeIOSPeertalkRelistenBeforeDiscovery()
         releaseAllDiscoveryChannels()
         mcpLastConnectSnapshot = nil
@@ -107,11 +118,15 @@ extension LKConnectionManager {
     public func tryToConnectAllPorts(forceFreshDiscovery: Bool = false) -> Single<[LKPeerChannel]> {
         Single.create { single in
             let task = Task { [self] in
+                LKConnectionTiming.shared.begin("connect.allPorts", attrs: ["fresh": forceFreshDiscovery])
+                defer { LKConnectionTiming.shared.end("connect.allPorts", attrs: ["fresh": forceFreshDiscovery]) }
                 // ObjC parity: normal discovery only purges dead transports. Full rediscovery
                 // (relisten + close all) is explicit via forceFreshDiscovery — not on every
                 // launch poll / auto-reconnect while inspectingApp is nil (breaks USB devices).
                 if forceFreshDiscovery {
+                    LKConnectionTiming.shared.begin("connect.freshPrepare")
                     self.prepareForAppRediscovery()
+                    LKConnectionTiming.shared.end("connect.freshPrepare")
                     // iOS relisten + Peertalk bind is async after POST /relisten-peertalk.
                     let delayNs: UInt64 = ProcessInfo.processInfo.environment["LOOKIN_VERIFY"] == "1"
                         ? 2_000_000_000
@@ -149,18 +164,31 @@ extension LKConnectionManager {
     }
 
     private func tryConnectAllSimulatorPorts(isRetryAfterIOSRelisten: Bool = false) async -> [LKPeerChannel] {
-        guard Self.hasBootedIOSSimulator() else { return [] }
+        LKConnectionTiming.shared.begin("connect.simctlBooted")
+        let booted = Self.hasBootedIOSSimulator()
+        LKConnectionTiming.shared.end("connect.simctlBooted", attrs: ["booted": booted])
+        guard booted else { return [] }
 
+        LKConnectionTiming.shared.begin("connect.simPorts", attrs: ["retry": isRetryAfterIOSRelisten])
         let channels = await performSimulatorConnectAttempts()
+        LKConnectionTiming.shared.end(
+            "connect.simPorts",
+            attrs: ["retry": isRetryAfterIOSRelisten, "count": channels.count]
+        )
         if channels.isEmpty, !isRetryAfterIOSRelisten {
             let verifyNoListeners = ProcessInfo.processInfo.environment["LOOKIN_VERIFY"] == "1"
                 && simulatorPortsForDiscovery().isEmpty
             let errors = mcpLastConnectSnapshot?.portErrors ?? []
             let allRefused = !errors.isEmpty && errors.allSatisfy { $0.hasSuffix(":61") }
             // :47190 MCP exists only in Simulator (localhost port-forward). Skip on USB-only workflows.
-            if verifyNoListeners || allRefused, requestIOSPeertalkRelisten() {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                return await tryConnectAllSimulatorPorts(isRetryAfterIOSRelisten: true)
+            if verifyNoListeners || allRefused {
+                LKConnectionTiming.shared.begin("connect.relisten")
+                let relisten = requestIOSPeertalkRelisten()
+                LKConnectionTiming.shared.end("connect.relisten", attrs: ["ok": relisten])
+                if relisten {
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
+                    return await tryConnectAllSimulatorPorts(isRetryAfterIOSRelisten: true)
+                }
             }
         }
         return channels
@@ -204,7 +232,9 @@ extension LKConnectionManager {
     }
 
     private func simulatorPortsForDiscovery() -> [LKSimulatorConnectionPort] {
-        guard ProcessInfo.processInfo.environment["LOOKIN_VERIFY"] == "1" else {
+        let prefilterPorts = ProcessInfo.processInfo.environment["LOOKIN_VERIFY"] == "1"
+            || ProcessInfo.processInfo.environment["LOOKIN_CONN_TIMING"] == "1"
+        guard prefilterPorts else {
             return allSimulatorPorts
         }
         let listening = allSimulatorPorts.filter {
