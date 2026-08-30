@@ -222,6 +222,14 @@ class LKLaunchViewController: LKBaseViewController {
         LookinDiagLog.log(
             "client launch found apps=\(usableApps.count) [\(names)] autoEnter=\(autoEnter) deferUSB=\(deferUSB)"
         )
+        if LKConnectionTiming.isEnabled, !usableApps.isEmpty {
+            let withScreenshot = usableApps.filter { $0.appInfo?.screenshot != nil }.count
+            LKConnectionTiming.shared.recordInstant(
+                "preview.launchTile",
+                durationMs: 0,
+                attrs: ["usable": usableApps.count, "withScreenshot": withScreenshot]
+            )
+        }
 
         let displayApps = LKAppsManager.appsForLaunchDisplay(discovered: apps)
 
@@ -240,10 +248,31 @@ class LKLaunchViewController: LKBaseViewController {
         }
         renderWithApps(displayApps)
 
-        if (usableApps.isEmpty || deferUSB), !isEnteringApp {
+        let missingScreenshots = Self.usableAppsMissingScreenshots(usableApps)
+        if (usableApps.isEmpty || deferUSB || missingScreenshots), !isEnteringApp {
+            if missingScreenshots, !usableApps.isEmpty, !deferUSB {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, !self.isEnteringApp else { return }
+                    self.reloadWithAutoEntering(false)
+                }
+            }
             scheduleAppDiscoveryPolling()
         } else {
             stopAppDiscoveryPolling()
+        }
+    }
+
+    /// MCP / automation: tiles are visible but first discover skipped images — fetch previews now.
+    func reloadLaunchTilePreviews() {
+        guard !appViews.isEmpty, !isEnteringApp else { return }
+        reloadWithAutoEntering(false, bypassMCPInProgressCheck: true)
+    }
+
+    private static func usableAppsMissingScreenshots(_ apps: [LKInspectableApp]) -> Bool {
+        apps.contains { app in
+            guard app.serverVersionError == nil, app.appInfo != nil else { return false }
+            if app.isLaunchUSBPendingPlaceholder { return false }
+            return app.appInfo?.screenshot == nil
         }
     }
 

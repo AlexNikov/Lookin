@@ -61,7 +61,7 @@ trap _write_summary EXIT
 wait_mcp_port() {
   local i
   for ((i = 1; i <= 60; i++)); do
-    dismiss_lookin_system_dialogs
+    lookin_pump_system_dialogs
     if curl -sf --max-time 3 "http://127.0.0.1:${PORT}/status" >/dev/null 2>&1; then
       return 0
     fi
@@ -340,6 +340,7 @@ print(int(d.get('count', 0)))
 }
 
 section "preflight"
+lookin_verify_preflight_clean "$DEVICE"
 if ! xcrun simctl boot "$SIM_UDID" 2>/dev/null; then
   xcrun simctl bootstatus "$SIM_UDID" -b 2>/dev/null || true
 fi

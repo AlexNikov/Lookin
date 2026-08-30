@@ -48,6 +48,12 @@ enum LKMCPInspectTarget {
             Thread.sleep(forTimeInterval: LKMCPTiming.launchTilePollInterval)
         }
 
+        DispatchQueue.main.async {
+            LKNavigationManager.sharedInstance.launchWindowController?
+                .launchViewController?
+                .reloadLaunchTilePreviews()
+        }
+
         return [
             "ok": !targets.isEmpty,
             "uiMode": LKNavigationManager.sharedInstance.mcpUIMode.rawValue,
@@ -109,7 +115,9 @@ enum LKMCPInspectTarget {
             accessibilityIdentifier: accessibilityIdentifier,
             index: index
         )
+        let bundleFromA11y = Self.bundleIdFromLaunchAccessibilityIdentifier(accessibilityIdentifier)
         if stub == nil,
+           bundleFromA11y == nil,
            normalizedChannel == nil,
            (accessibilityIdentifier ?? "").isEmpty,
            index == nil {
@@ -137,13 +145,40 @@ enum LKMCPInspectTarget {
             let connectSingle: Single<(LKInspectableApp, LookinHierarchyInfo)>
             if let stub, stub.serverVersionError == nil {
                 connectSingle = LKAppsManager.sharedInstance.connectInspectableApp(stub)
+            } else if let bundleFromA11y {
+                connectSingle = LKAppsManager.sharedInstance.fetchAppInfos(withImage: false, localInfos: nil)
+                    .flatMap { apps -> Single<(LKInspectableApp, LookinHierarchyInfo)> in
+                        let usable = apps.filter { $0.serverVersionError == nil && $0.appInfo != nil }
+                        guard let match = usable.first(where: { $0.appInfo?.appBundleIdentifier == bundleFromA11y }) else {
+                            return .error(LKLookinClientErrors.noConnect)
+                        }
+                        return LKAppsManager.sharedInstance.connectInspectableApp(match)
+                    }
             } else if let normalizedChannel {
                 connectSingle = LKAppsManager.sharedInstance.fetchAppInfos(withImage: false, localInfos: nil)
                     .flatMap { apps -> Single<(LKInspectableApp, LookinHierarchyInfo)> in
-                        guard let match = apps.first(where: { candidate in
-                            guard candidate.serverVersionError == nil, candidate.appInfo != nil else { return false }
-                            return LKAppsManager.mcpChannelTag(for: candidate).rawValue == normalizedChannel
-                        }) else {
+                        let usable = apps.filter { $0.serverVersionError == nil && $0.appInfo != nil }
+                        let match: LKInspectableApp?
+                        if let accessibilityIdentifier, !accessibilityIdentifier.isEmpty,
+                           let stub {
+                            match = usable.first { candidate in
+                                LKAppsManager.isSameInspectableSession(stub, candidate)
+                            }
+                        } else if normalizedChannel == LKMCPChannelTag.sim.rawValue, usable.count > 1 {
+                            let simApps = usable.filter {
+                                !LKAppsManager.inspectSessionUsesUSB($0)
+                            }
+                            if let index, index >= 0, index < simApps.count {
+                                match = simApps[index]
+                            } else {
+                                match = simApps.first
+                            }
+                        } else {
+                            match = usable.first { candidate in
+                                LKAppsManager.mcpChannelTag(for: candidate).rawValue == normalizedChannel
+                            }
+                        }
+                        guard let match else {
                             return .error(LKLookinClientErrors.noConnect)
                         }
                         conn.releaseDiscoveryChannels(except: match.channel)
@@ -246,8 +281,15 @@ enum LKMCPInspectTarget {
                 < (rhs.view.app?.appInfo?.deviceDescription ?? "")
         }
 
-        if let index, index >= 0, index < sorted.count, let app = sorted[index].view.app {
-            return app
+        if let index, index >= 0 {
+            let simOnly = sorted.filter { $0.channel == .sim }
+            if channel?.lowercased() == LKMCPChannelTag.sim.rawValue, !simOnly.isEmpty {
+                if index < simOnly.count, let app = simOnly[index].view.app {
+                    return app
+                }
+            } else if index < sorted.count, let app = sorted[index].view.app {
+                return app
+            }
         }
         if let accessibilityIdentifier, !accessibilityIdentifier.isEmpty {
             if let match = sorted.first(where: { $0.view.accessibilityIdentifier() == accessibilityIdentifier })?.view.app {
@@ -286,5 +328,17 @@ enum LKMCPInspectTarget {
         for subview in view.subviews {
             collectLaunchAppViews(in: subview, into: &entries)
         }
+    }
+
+    /// `lookin.launch.app.{bundleId}.sim` → bundle id
+    private static func bundleIdFromLaunchAccessibilityIdentifier(_ identifier: String?) -> String? {
+        guard let identifier, !identifier.isEmpty else { return nil }
+        let prefix = "lookin.launch.app."
+        let suffix = ".sim"
+        guard identifier.hasPrefix(prefix), identifier.hasSuffix(suffix) else { return nil }
+        let start = identifier.index(identifier.startIndex, offsetBy: prefix.count)
+        let end = identifier.index(identifier.endIndex, offsetBy: -suffix.count)
+        let bundle = String(identifier[start ..< end])
+        return bundle.isEmpty ? nil : bundle
     }
 }

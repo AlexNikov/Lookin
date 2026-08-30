@@ -79,7 +79,7 @@ sys.exit(1)
 wait_mcp_port() {
   local i
   for ((i=1; i<=60; i++)); do
-    dismiss_lookin_system_dialogs
+    lookin_pump_system_dialogs
     if curl -sf --max-time 2 "http://127.0.0.1:${PORT}/status" >/dev/null 2>&1; then
       return 0
     fi

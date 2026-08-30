@@ -11,11 +11,58 @@ public final class LKAppsManager: NSObject {
     }
 
     /// Same bundle on simulator and USB counts as different inspect targets.
+    /// When both are simulator-only, Peertalk port distinguishes dual-sim sessions.
     static func isSameInspectableSession(_ a: LKInspectableApp?, _ b: LKInspectableApp?) -> Bool {
         guard let a, let b else { return false }
         guard a.appInfo?.isEqual(toAppInfo: b.appInfo) == true else { return false }
         let conn = LKConnectionManager.sharedInstance
-        return conn.channelUsesUSB(a.channel) == conn.channelUsesUSB(b.channel)
+        let aUSB = inspectSessionUsesUSB(a)
+        let bUSB = inspectSessionUsesUSB(b)
+        guard aUSB == bUSB else { return false }
+        if aUSB { return true }
+        let aPort = a.channel?.targetPort ?? 0
+        let bPort = b.channel?.targetPort ?? 0
+        if aPort > 0, bPort > 0 { return aPort == bPort }
+        return true
+    }
+
+    static func usableSimulatorApps(from apps: [LKInspectableApp]) -> [LKInspectableApp] {
+        usableInspectableApps(from: apps).filter { !inspectSessionUsesUSB($0) }
+    }
+
+    /// Popover / fresh discover when sim+USB or multiple booted simulators may yield more than one target.
+    static func popoverNeedsFreshDiscover(from apps: [LKInspectableApp]) -> Bool {
+        let conn = LKConnectionManager.sharedInstance
+        let usable = usableInspectableApps(from: apps)
+        if conn.hasAttachedUSBDevices {
+            let hasUSB = usable.contains { conn.channelUsesUSB($0.channel) }
+            let hasSim = usable.contains { !inspectSessionUsesUSB($0) }
+            return !(hasUSB && hasSim)
+        }
+        let bootedSims = LKConnectionManager.mcpBootedIOSSimulatorCount()
+        guard bootedSims >= 2 else { return false }
+        return usableSimulatorApps(from: apps).count < min(bootedSims, 2)
+    }
+
+    static func matchesInspectTarget(
+        _ candidate: LKInspectableApp,
+        session: LKInspectableApp,
+        wantsUSB: Bool
+    ) -> Bool {
+        guard candidate.serverVersionError == nil, candidate.appInfo != nil else { return false }
+        let conn = LKConnectionManager.sharedInstance
+        guard conn.channelUsesUSB(candidate.channel) == wantsUSB else { return false }
+        if let targetInfo = session.appInfo {
+            let bundle = targetInfo.appBundleIdentifier ?? ""
+            if !bundle.isEmpty, !targetInfo.isEqual(toAppInfo: candidate.appInfo) {
+                return false
+            }
+        }
+        if wantsUSB { return true }
+        if let sessionPort = session.channel?.targetPort, sessionPort > 0 {
+            return candidate.channel?.targetPort == sessionPort
+        }
+        return isSameInspectableSession(session, candidate)
     }
 
     /// Peertalk transport for an inspect target — survives a dropped channel (reload / reconnect).
@@ -243,13 +290,7 @@ public final class LKAppsManager: NSObject {
             .flatMap { [weak self] apps -> Single<(LKInspectableApp, LookinHierarchyInfo)> in
                 guard let self else { return .error(LKLookinClientErrors.inner) }
                 let fresh = apps.first(where: { candidate in
-                    guard candidate.serverVersionError == nil, candidate.appInfo != nil else { return false }
-                    guard conn.channelUsesUSB(candidate.channel) == wantsUSB else { return false }
-                    let bundle = targetInfo.appBundleIdentifier ?? ""
-                    if !bundle.isEmpty {
-                        return targetInfo.isEqual(toAppInfo: candidate.appInfo)
-                    }
-                    return Self.isSameInspectableSession(session, candidate)
+                    Self.matchesInspectTarget(candidate, session: session, wantsUSB: wantsUSB)
                 }) ?? self.pickInspectableAppForReload(current: session, from: apps, wantsUSB: wantsUSB)
                 guard let fresh else {
                     LookinDiagLog.log(
@@ -278,7 +319,10 @@ public final class LKAppsManager: NSObject {
             switchStatusRelay.accept(.fetchingAppList)
         }
         let needsDualTargets = inspectingApp != nil
-            && LKConnectionManager.sharedInstance.hasAttachedUSBDevices
+            && (
+                LKConnectionManager.sharedInstance.hasAttachedUSBDevices
+                    || LKConnectionManager.mcpBootedIOSSimulatorCount() >= 2
+            )
         return fetchAppInfosForPopoverUnlocked(withImage: needImages, needsDualTargets: needsDualTargets)
             .do(onDispose: { [weak self] in
                 // Only reset if we're still in fetchingAppList; don't overwrite a connecting state
@@ -288,17 +332,14 @@ public final class LKAppsManager: NSObject {
             })
     }
 
-    /// Popover list while inspecting: prefer a light fetch; full relisten only if sim+USB list is incomplete.
+    /// Popover list while inspecting: prefer a light fetch; full relisten when sim+USB or dual-sim list is incomplete.
     private func fetchAppInfosForPopoverUnlocked(
         withImage needImages: Bool,
         needsDualTargets: Bool
     ) -> Single<[LKInspectableApp]> {
-        func usableCount(_ apps: [LKInspectableApp]) -> Int {
-            Self.usableInspectableApps(from: apps).count
-        }
         return fetchAppInfos(withImage: needImages, localInfos: nil, forceFreshDiscovery: false)
             .flatMap { [weak self] apps -> Single<[LKInspectableApp]> in
-                guard let self, needsDualTargets, usableCount(apps) < 2 else {
+                guard let self, needsDualTargets, Self.popoverNeedsFreshDiscover(from: apps) else {
                     return .just(apps)
                 }
                 return self.fetchAppInfos(withImage: needImages, localInfos: nil, forceFreshDiscovery: true)
@@ -309,6 +350,22 @@ public final class LKAppsManager: NSObject {
     /// Observe switchSuccessObservable / switchFailureObservable for results.
     public func switchToInspectableApp(_ selected: LKInspectableApp) {
         let previousApp = inspectingApp
+        let previousPort = previousApp?.channel?.targetPort ?? 0
+        let selectedPort = selected.channel?.targetPort ?? 0
+        let isSimToSim = previousApp != nil
+            && !Self.inspectSessionUsesUSB(previousApp!)
+            && !Self.inspectSessionUsesUSB(selected)
+        if isSimToSim {
+            LKConnectionTiming.shared.begin(
+                "switch.simToSim",
+                attrs: [
+                    "fromPort": previousPort,
+                    "toPort": selectedPort,
+                    "fromBundle": previousApp?.appInfo?.appBundleIdentifier ?? "",
+                    "toBundle": selected.appInfo?.appBundleIdentifier ?? "",
+                ]
+            )
+        }
         // Set flag before resetting the bag so the old subscription's onDispose (which clears the flag)
         // cannot leave a window where channelWillEnd triggers a spurious auto-reconnect.
         intentionalSessionChange = true
@@ -323,6 +380,9 @@ public final class LKAppsManager: NSObject {
                     let (freshApp, info) = pair
                     self.inspectingApp = freshApp
                     self.switchStatusRelay.accept(.idle)
+                    if isSimToSim {
+                        LKConnectionTiming.shared.end("switch.simToSim", attrs: ["ok": true])
+                    }
                     self.switchSuccessRelay.accept(SwitchSuccess(
                         previousApp: previousApp,
                         freshApp: freshApp,
@@ -330,6 +390,9 @@ public final class LKAppsManager: NSObject {
                     ))
                 },
                 onFailure: { [weak self] error in
+                    if isSimToSim {
+                        LKConnectionTiming.shared.end("switch.simToSim", attrs: ["ok": false])
+                    }
                     self?.switchStatusRelay.accept(.idle)
                     self?.switchFailureRelay.accept(error)
                 }
@@ -465,6 +528,9 @@ public final class LKAppsManager: NSObject {
            let match = usable.first(where: { Self.isSameInspectableSession(current, $0) }) {
             return match
         }
+        if wantsUSB == false, let currentPort = current?.channel?.targetPort, currentPort > 0 {
+            return usable.first { $0.channel?.targetPort == currentPort }
+        }
         return nil
     }
 
@@ -558,7 +624,10 @@ public final class LKAppsManager: NSObject {
         transportFilter: LKInspectTransportFilter? = nil
     ) -> Single<[LKInspectableApp]> {
         let validAppInfos = (localInfos ?? []).filter { info in
-            Date().timeIntervalSince1970 - info.cachedTimestamp <= 8
+            guard Date().timeIntervalSince1970 - info.cachedTimestamp <= 8 else { return false }
+            // iOS returns shouldUseCache when localIdentifiers match — that stub has no screenshot.
+            if needImages, info.screenshot == nil { return false }
+            return true
         }
         let localInfoIdentifiers = validAppInfos.map { NSNumber(value: $0.appInfoIdentifier) }
         let appParams = WireAppRequestParams(
@@ -603,7 +672,8 @@ public final class LKAppsManager: NSObject {
                     // Reuse the already-known app info instead of sending a fresh discovery request.
                     if let inspecting = self?.inspectingApp,
                        inspecting.channel === channel,
-                       let cachedInfo = inspecting.appInfo {
+                       let cachedInfo = inspecting.appInfo,
+                       !needImages || cachedInfo.screenshot != nil {
                         let reuse = LKInspectableApp()
                         reuse.appInfo = cachedInfo
                         reuse.channel = channel
@@ -611,6 +681,13 @@ public final class LKAppsManager: NSObject {
                             "client fetchAppInfos: reuse cached app info for active inspection channel port=\(channel.targetPort)"
                         )
                         return .just(reuse)
+                    }
+                    let portNum = channel.targetPort
+                    if LKConnectionTiming.isEnabled {
+                        LKConnectionTiming.shared.begin(
+                            "discover.appRequest.port",
+                            attrs: ["port": portNum]
+                        )
                     }
                     return LKConnectionManager.sharedInstance.request(
                         withType: UInt32(LookinRequestTypeApp),
@@ -622,13 +699,26 @@ public final class LKAppsManager: NSObject {
                     .timeout(.seconds(Int(discoverPerChannelTimeout)), scheduler: MainScheduler.instance)
                     .asSingle()
                     .map { pair -> LKInspectableApp? in
-                        Self.inspectableApp(
+                        if LKConnectionTiming.isEnabled {
+                            LKConnectionTiming.shared.end(
+                                "discover.appRequest.port",
+                                attrs: ["port": portNum, "ok": true]
+                            )
+                        }
+                        return Self.inspectableApp(
                             from: pair,
                             validAppInfos: validAppInfos,
-                            channel: channel
+                            channel: channel,
+                            needImages: needImages
                         )
                     }
                     .catch { error in
+                        if LKConnectionTiming.isEnabled {
+                            LKConnectionTiming.shared.end(
+                                "discover.appRequest.port",
+                                attrs: ["port": portNum, "ok": false]
+                            )
+                        }
                         let nsError = error as NSError
                         let port = channel.targetPort
                         if nsError.code == LookinErrCode_ServerVersionTooHigh || nsError.code == LookinErrCode_ServerVersionTooLow {
@@ -705,7 +795,8 @@ public final class LKAppsManager: NSObject {
     private static func inspectableApp(
         from pair: LookinPair,
         validAppInfos: [LookinAppInfo],
-        channel: LKPeerChannel
+        channel: LKPeerChannel,
+        needImages: Bool = false
     ) -> LKInspectableApp? {
         guard let response = pair.first as? LookinConnectionResponseAttachment,
               let relatedChannel = pair.second as? LKPeerChannel else {
@@ -733,10 +824,9 @@ public final class LKAppsManager: NSObject {
         receivedInfo.cachedTimestamp = Date().timeIntervalSince1970
         if receivedInfo.shouldUseCache,
            let localInfo = validAppInfos.first(where: {
-               // Cache-only responses only carry appInfoIdentifier (deviceType defaults to .others).
-               // Match by identifier alone so simulator apps (deviceType=.simulator) are found.
                $0.appInfoIdentifier == receivedInfo.appInfoIdentifier
-           }) {
+           }),
+           !needImages || localInfo.screenshot != nil {
             infoToUse = localInfo
         }
 

@@ -251,31 +251,64 @@ lookin_prepare_clean_launch() {
   defaults write "${bundle}" NSQuitAlwaysKeepsWindows -bool false 2>/dev/null || true
 }
 
-# Click "Don't Reopen" / OK on crash recovery, sheets, and Problem Reporter.
+# Click Ignore / Don't Reopen / OK on crash recovery, UserNotificationCenter
+# "Lookin quit unexpectedly", sheets, and Problem Reporter.
 dismiss_lookin_system_dialogs() {
   osascript <<'APPLESCRIPT' 2>/dev/null || true
-on clickButtonNamed(btnName)
-  try
-    click button btnName
-    return true
-  end try
-  return false
-end clickButtonNamed
-
 on dismissButtonsInWindow(w)
   set dismissed to false
-  repeat with btnName in {"Don't Reopen", "Don’t Reopen", "Не открывать", "OK", "Ok", "Close", "Закрыть"}
+  -- Prefer Ignore / Don't Reopen over Reopen so verify does not relaunch a crashed build.
+  repeat with btnName in {"Ignore", "Игнорировать", "Don't Reopen", "Don’t Reopen", "Не открывать", "OK", "Ok", "Close", "Закрыть", "Dismiss", "Отклонить"}
     try
       if exists button btnName of w then
         click button btnName of w
         set dismissed to true
+        exit repeat
       end if
     end try
   end repeat
+  if dismissed then return true
+  -- Buttons may live in nested groups (UserNotificationCenter crash sheet).
+  try
+    repeat with g in groups of w
+      set dismissed to dismissButtonsInWindow(g)
+      if dismissed then return true
+      try
+        repeat with g2 in groups of g
+          set dismissed to dismissButtonsInWindow(g2)
+          if dismissed then return true
+        end repeat
+      end try
+    end repeat
+  end try
   return dismissed
 end dismissButtonsInWindow
 
+on dismissCrashSheetsInProcess(pname)
+  try
+    if not (exists process pname) then return false
+  on error
+    return false
+  end try
+  set anyDismissed to false
+  tell process pname
+    try
+      set frontmost to true
+    end try
+    repeat with w in windows
+      try
+        if dismissButtonsInWindow(w) then set anyDismissed to true
+      end try
+    end repeat
+  end tell
+  return anyDismissed
+end dismissCrashSheetsInProcess
+
 tell application "System Events"
+  -- macOS "X quit unexpectedly" sheet (Reopen / Ignore / Report…) lives here, not in Lookin.
+  dismissCrashSheetsInProcess("UserNotificationCenter")
+  dismissCrashSheetsInProcess("CoreServicesUIAgent")
+
   -- Problem Report / crash reporter window (separate process).
   if exists process "Problem Reporter" then
     tell process "Problem Reporter"
@@ -299,6 +332,11 @@ tell application "System Events"
       -- Crash recovery prompt can appear as a normal window, not only AXSystemDialog.
       try
         if (w's name as text) contains "unexpectedly quit while reopening windows" then
+          dismissButtonsInWindow(w)
+        end if
+      end try
+      try
+        if (w's name as text) contains "quit unexpectedly" then
           dismissButtonsInWindow(w)
         end if
       end try
@@ -329,13 +367,112 @@ end tell
 APPLESCRIPT
 }
 
+# True if macOS shows a crash sheet for Lookin (UserNotificationCenter / Problem Reporter).
+lookin_crash_dialog_present() {
+  osascript <<'APPLESCRIPT' 2>/dev/null || echo 0
+tell application "System Events"
+  try
+    if exists process "UserNotificationCenter" then
+      tell process "UserNotificationCenter"
+        if (count of windows) > 0 then
+          repeat with w in windows
+            try
+              set btnNames to name of every button of w as text
+              if btnNames contains "Ignore" or btnNames contains "Reopen" then
+                return 1
+              end if
+            end try
+            try
+              repeat with g in groups of w
+                set btnNames to name of every button of g as text
+                if btnNames contains "Ignore" or btnNames contains "Reopen" then
+                  return 1
+                end if
+              end repeat
+            end try
+          end repeat
+        end if
+      end tell
+    end if
+  end try
+  try
+    if exists process "Problem Reporter" then
+      if (count of windows of process "Problem Reporter") > 0 then return 1
+    end if
+  end try
+end tell
+return 0
+APPLESCRIPT
+}
+
+lookin_process_running() {
+  pgrep -x Lookin >/dev/null 2>&1
+}
+
+# Dismiss crash UI; if Lookin is dead and LOOKIN_APP is set, relaunch (opt-in via LOOKIN_RELAUNCH_ON_CRASH=1, default on for verify).
+# Returns 0 if a crash was handled (dialog and/or relaunch), 1 if nothing to do.
+lookin_handle_crash_if_needed() {
+  local app="${1:-${LOOKIN_APP:-}}"
+  local port="${LOOKIN_MCP_PORT:-${PORT:-47192}}"
+  local relaunch="${LOOKIN_RELAUNCH_ON_CRASH:-1}"
+  local had_crash=0
+
+  if [[ "$(lookin_crash_dialog_present | tr -d '[:space:]')" == "1" ]]; then
+    had_crash=1
+    echo "  lookin crash dialog — dismissing (Ignore)" >&2
+    dismiss_lookin_system_dialogs
+  fi
+
+  if lookin_process_running; then
+    if [[ "$had_crash" -eq 1 ]]; then
+      return 0
+    fi
+    return 1
+  fi
+
+  # Process gone: treat as crash if dialog was shown, MCP is down, or caller forces relaunch.
+  if ! curl -sf --max-time 1 "http://127.0.0.1:${port}/status" >/dev/null 2>&1; then
+    had_crash=1
+  fi
+
+  if [[ "$had_crash" -ne 1 ]]; then
+    return 1
+  fi
+
+  dismiss_lookin_system_dialogs
+  if [[ "$relaunch" != "1" ]]; then
+    echo "  lookin crashed (MCP :${port} down) — relaunch disabled" >&2
+    return 0
+  fi
+  if [[ ! -d "$app" ]]; then
+    echo "  lookin crashed — set LOOKIN_APP to relaunch" >&2
+    return 0
+  fi
+
+  echo "  lookin crashed — relaunching $app" >&2
+  lookin_prepare_clean_launch
+  dismiss_lookin_system_dialogs
+  # Preserve verify timing env across relaunch.
+  env \
+    LOOKIN_VERIFY="${LOOKIN_VERIFY:-1}" \
+    LOOKIN_CONN_TIMING="${LOOKIN_CONN_TIMING:-${LOOKIN_VERIFY:-}}" \
+    open -g -a "$app" 2>/dev/null || open -a "$app" 2>/dev/null || true
+  return 0
+}
+
+# Prefer this inside wait_mcp_port loops (crash sheet + other Lookin alerts).
+lookin_pump_system_dialogs() {
+  lookin_handle_crash_if_needed || true
+  dismiss_lookin_system_dialogs
+}
+
 # Background loop: call before long waits, then kill $! when done.
 dismiss_lookin_dialogs_watch_start() {
   local seconds="${1:-120}"
   (
     local end=$((SECONDS + seconds))
     while (( SECONDS < end )); do
-      dismiss_lookin_system_dialogs
+      lookin_handle_crash_if_needed || dismiss_lookin_system_dialogs
       sleep 0.6
     done
   ) &
@@ -347,7 +484,7 @@ dismiss_lookin_dialogs_watch_stop() {
   [[ -n "$pid" ]] || return 0
   kill "$pid" 2>/dev/null || true
   wait "$pid" 2>/dev/null || true
-  dismiss_lookin_system_dialogs
+  lookin_handle_crash_if_needed || dismiss_lookin_system_dialogs
 }
 
 # Count _NSAlertContentView in MCP /ui/hierarchy JSON (0 = clean).
@@ -370,4 +507,85 @@ for w in d.get('data', {}).get('windows', []):
     total += walk(w)
 print(total)
 " "$json_file" 2>/dev/null || echo 0
+}
+
+# Terminate all Lookin demo bundles on one simulator (verify isolation).
+lookin_terminate_ios_demos_on_sim() {
+  local sim_udid="$1"
+  [[ -n "$sim_udid" ]] || return 0
+  xcrun simctl terminate "$sim_udid" "$MCP_SAMPLE_BUNDLE_ID" 2>/dev/null || true
+  xcrun simctl terminate "$sim_udid" "$DEMO_BUNDLE_ID" 2>/dev/null || true
+  xcrun simctl terminate "$sim_udid" "$LEGACY_DEMO_BUNDLE_ID" 2>/dev/null || true
+  xcrun simctl terminate "$sim_udid" "$COLLECTION_LAYOUT_SWIFT_BUNDLE_ID" 2>/dev/null || true
+  xcrun simctl terminate "$sim_udid" "$COLLECTION_LAYOUT_OBJC_BUNDLE_ID" 2>/dev/null || true
+  xcrun simctl terminate "$sim_udid" "Lookin.LookinCollectionLayoutDemoBaseline" 2>/dev/null || true
+}
+
+lookin_terminate_ios_demos_on_all_booted_sims() {
+  local sim_udid
+  while IFS= read -r sim_udid; do
+    [[ -n "$sim_udid" ]] || continue
+    echo "  preflight: terminate demos on sim $sim_udid" >&2
+    lookin_terminate_ios_demos_on_sim "$sim_udid"
+  done < <(xcrun simctl list devices booted 2>/dev/null | rg -o '[A-F0-9-]{36}' || true)
+  pkill -f LookinMCPSample 2>/dev/null || true
+  pkill -f LookinCollectionLayoutDemo 2>/dev/null || true
+  pkill -f LookinCustomInfoDemo 2>/dev/null || true
+}
+
+lookin_shutdown_all_booted_simulators() {
+  local sim_udid
+  while IFS= read -r sim_udid; do
+    [[ -n "$sim_udid" ]] || continue
+    echo "  preflight: shutdown sim $sim_udid" >&2
+    xcrun simctl shutdown "$sim_udid" 2>/dev/null || true
+  done < <(xcrun simctl list devices booted 2>/dev/null | rg -o '[A-F0-9-]{36}' || true)
+  osascript -e 'tell application "Simulator" to quit' 2>/dev/null || true
+  sleep 1
+}
+
+lookin_terminate_device_demo() {
+  local device_udid="$1"
+  local bundle_id="${2:-$COLLECTION_LAYOUT_SWIFT_BUNDLE_ID}"
+  [[ -n "$device_udid" ]] || return 0
+  local pid=""
+  pid="$(xcrun devicectl device info processes --device "$device_udid" 2>/dev/null \
+    | rg -F "$bundle_id" 2>/dev/null | awk '{print $1}' | head -1 || true)"
+  if [[ -n "${pid:-}" ]]; then
+    echo "  preflight: terminate device demo pid=$pid ($bundle_id)" >&2
+    xcrun devicectl device process terminate --device "$device_udid" --pid "$pid" 2>/dev/null || true
+  fi
+}
+
+# Full verify preflight: mac Lookin clients, iOS demos, simulators, stale Peertalk/MCP ports.
+# Usage: lookin_verify_preflight_clean [DEVICE_UDID]
+lookin_verify_preflight_clean() {
+  local device_udid="${1:-${DEVICE_UDID:-}}"
+
+  echo "======== lookin verify preflight (clean slate) ========" >&2
+  LOOKIN_RELAUNCH_ON_CRASH=0 lookin_pump_system_dialogs
+  lookin_prepare_clean_launch
+  killall -9 Lookin 2>/dev/null || true
+  killall "Problem Reporter" 2>/dev/null || true
+  pkill -f "/Applications/Lookin.app/Contents/MacOS/Lookin" 2>/dev/null || true
+
+  for mcp_port in 47191 47192; do
+    local pids
+    pids="$(lsof -ti "tcp:${mcp_port}" 2>/dev/null || true)"
+    if [[ -n "$pids" ]]; then
+      echo "  preflight: free mac MCP :${mcp_port}" >&2
+      kill -9 $pids 2>/dev/null || true
+    fi
+  done
+
+  lookin_terminate_ios_demos_on_all_booted_sims
+  lookin_free_ios_mcp_port_47190
+  lookin_terminate_device_demo "$device_udid"
+  lookin_shutdown_all_booted_simulators
+
+  sleep 2
+  local booted remaining
+  booted="$(xcrun simctl list devices booted 2>/dev/null | rg -c Booted 2>/dev/null)" || booted=0
+  remaining="$(pgrep -x Lookin 2>/dev/null | wc -l | tr -d ' ')" || remaining=0
+  echo "  preflight done: bootedSims=$booted lookinProcesses=$remaining" >&2
 }

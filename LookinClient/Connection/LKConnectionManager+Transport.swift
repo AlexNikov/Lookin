@@ -24,7 +24,10 @@ final class LKUSBConnectionPort: CustomStringConvertible {
 
 extension LKConnectionManager {
     private static var lastIOSRelistenRequestAt: TimeInterval = 0
-    private static var bootedSimulatorCache: (value: Bool, at: TimeInterval)?
+    private static var bootedSimulatorCache: (value: Bool, at: TimeInterval, count: Int)?
+    /// Serializes Peertalk discover connects — concurrent launch poll + MCP refresh raced on
+    /// port.connectedChannel / mcpLastConnectSnapshot (SIGSEGV in dual-sim).
+    private static let connectAllPortsLock = NSLock()
 
     static func invalidateBootedSimulatorCache() {
         bootedSimulatorCache = nil
@@ -118,6 +121,12 @@ extension LKConnectionManager {
     public func tryToConnectAllPorts(forceFreshDiscovery: Bool = false) -> Single<[LKPeerChannel]> {
         Single.create { single in
             let task = Task { [self] in
+                await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+                    Self.connectAllPortsLock.lock()
+                    cont.resume()
+                }
+                defer { Self.connectAllPortsLock.unlock() }
+
                 LKConnectionTiming.shared.begin("connect.allPorts", attrs: ["fresh": forceFreshDiscovery])
                 defer { LKConnectionTiming.shared.end("connect.allPorts", attrs: ["fresh": forceFreshDiscovery]) }
                 // ObjC parity: normal discovery only purges dead transports. Full rediscovery
@@ -139,11 +148,11 @@ extension LKConnectionManager {
                 async let usbChannels = self.tryConnectAllUSBDevices()
                 let channels = await simulatorChannels + usbChannels
                 if !channels.isEmpty, self.mcpLastConnectSnapshot == nil {
-                    let snap = LKMCPConnectSnapshot()
-                    snap.channelCount = channels.count
-                    snap.connectedPorts = channels.map { Int($0.targetPort) }
-                    snap.timestamp = Date().timeIntervalSince1970
-                    self.mcpLastConnectSnapshot = snap
+                    self.mcpLastConnectSnapshot = LKMCPConnectSnapshot(
+                        channelCount: channels.count,
+                        connectedPorts: channels.map { Int($0.targetPort) },
+                        timestamp: Date().timeIntervalSince1970
+                    )
                 }
                 single(.success(channels))
             }
@@ -196,22 +205,33 @@ extension LKConnectionManager {
 
     /// MCP launch-health: whether an iOS Simulator is booted (cached ~3s).
     static func mcpHasBootedIOSSimulator() -> Bool {
-        hasBootedIOSSimulator()
+        mcpBootedIOSSimulatorCount() > 0
+    }
+
+    /// Number of booted iOS simulators (cached ~3s with `bootedSimulatorCache`).
+    static func mcpBootedIOSSimulatorCount() -> Int {
+        let now = Date().timeIntervalSince1970
+        if let cached = bootedSimulatorCache, now - cached.at < 3 {
+            return cached.count
+        }
+        let count = queryBootedIOSSimulatorCount()
+        bootedSimulatorCache = (count > 0, now, count)
+        return count
     }
 
     /// Avoid simctl + :47190 relisten spam when the user inspects a physical device only.
     private static func hasBootedIOSSimulator() -> Bool {
-        let now = Date().timeIntervalSince1970
-        if let cached = bootedSimulatorCache, now - cached.at < 3 {
-            return cached.value
-        }
+        mcpBootedIOSSimulatorCount() > 0
+    }
+
+    private static func queryBootedIOSSimulatorCount() -> Int {
         let pipe = Pipe()
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
         task.arguments = ["simctl", "list", "devices", "booted", "-j"]
         task.standardOutput = pipe
         task.standardError = Pipe()
-        var booted = false
+        var count = 0
         do {
             try task.run()
             task.waitUntilExit()
@@ -219,16 +239,15 @@ extension LKConnectionManager {
                 let data = pipe.fileHandleForReading.readDataToEndOfFile()
                 if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                    let devices = json["devices"] as? [String: [[String: Any]]] {
-                    booted = devices.values.contains { list in
-                        list.contains { ($0["state"] as? String) == "Booted" }
+                    for list in devices.values {
+                        count += list.filter { ($0["state"] as? String) == "Booted" }.count
                     }
                 }
             }
         } catch {
-            booted = false
+            count = 0
         }
-        bootedSimulatorCache = (booted, now)
-        return booted
+        return count
     }
 
     private func simulatorPortsForDiscovery() -> [LKSimulatorConnectionPort] {
@@ -241,11 +260,14 @@ extension LKConnectionManager {
             LKMCPClientDiagnostics.simulatorPortIsListening(Int($0.portNumber))
         }
         // Do not parallel-scan the full port range — stray connects break iOS Peertalk.
-        guard !listening.isEmpty else { return [] }
-        guard listening.count > 1 else { return listening }
-        // Prefer the lowest listening port (CustomInfo demo binds 47164 first in the range).
-        if let preferred = listening.min(by: { $0.portNumber < $1.portNumber }) {
-            return [preferred]
+        // When multiple simulators run demos, each binds a distinct LISTEN port — connect to all of them.
+        if LKConnectionTiming.isEnabled, !listening.isEmpty {
+            let portList = listening.map { Int($0.portNumber) }.sorted()
+            LKConnectionTiming.shared.recordInstant(
+                "connect.listeningPorts",
+                durationMs: 0,
+                attrs: ["ports": portList, "count": portList.count]
+            )
         }
         return listening
     }
@@ -279,14 +301,15 @@ extension LKConnectionManager {
                 }
             }
 
-            let snapshot = LKMCPConnectSnapshot()
-            snapshot.channelCount = channels.count
-            snapshot.connectedPorts = connectedPorts
-            snapshot.portErrors = connectErrors
-            snapshot.cachedSimulatorPorts = allSimulatorPorts
-                .filter { $0.connectedChannel != nil }
-                .map { Int($0.portNumber) }
-            snapshot.timestamp = Date().timeIntervalSince1970
+            let snapshot = LKMCPConnectSnapshot(
+                channelCount: channels.count,
+                connectedPorts: connectedPorts,
+                portErrors: connectErrors,
+                cachedSimulatorPorts: allSimulatorPorts
+                    .filter { $0.connectedChannel != nil }
+                    .map { Int($0.portNumber) },
+                timestamp: Date().timeIntervalSince1970
+            )
             mcpLastConnectSnapshot = snapshot
             LKMCPClientDiagnostics.shared.recordConnectSnapshot(snapshot)
 

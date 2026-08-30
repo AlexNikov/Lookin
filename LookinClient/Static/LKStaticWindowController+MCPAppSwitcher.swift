@@ -64,7 +64,7 @@ enum LKMCPAppSwitcher {
 
         let fetchResult: Result<[LKInspectableApp], Error> = LKMCPBlockingWait.onMain(timeout: timeout) { done in
             _ = LookinRACSignalRx.observeMainThread(
-                LKAppsManager.sharedInstance.fetchAppsForPopover(withImage: false)
+                LKAppsManager.sharedInstance.fetchAppsForPopover(withImage: true)
             )
             .subscribe(
                 onSuccess: { apps in done(.success(apps)) },

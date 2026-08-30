@@ -11,14 +11,28 @@ import LookinShared
 import RxRelay
 import RxSwift
 
-public final class LKMCPConnectSnapshot {
-    public var channelCount: Int = 0
-    public var connectedPorts: [Int] = []
-    public var portErrors: [String] = []
-    public var cachedSimulatorPorts: [Int] = []
-    public var timestamp: TimeInterval = 0
+/// Immutable connect diagnostics — avoids races when concurrent discover replaces the snapshot
+/// while MCP `/status` reads arrays (class + mutable `[Int]` caused SIGSEGV / malloc corruption).
+public struct LKMCPConnectSnapshot: Sendable {
+    public let channelCount: Int
+    public let connectedPorts: [Int]
+    public let portErrors: [String]
+    public let cachedSimulatorPorts: [Int]
+    public let timestamp: TimeInterval
 
-    public init() {}
+    public init(
+        channelCount: Int = 0,
+        connectedPorts: [Int] = [],
+        portErrors: [String] = [],
+        cachedSimulatorPorts: [Int] = [],
+        timestamp: TimeInterval = 0
+    ) {
+        self.channelCount = channelCount
+        self.connectedPorts = connectedPorts
+        self.portErrors = portErrors
+        self.cachedSimulatorPorts = cachedSimulatorPorts
+        self.timestamp = timestamp
+    }
 
     public func dictionaryRepresentation() -> [String: Any] {
         [
@@ -41,6 +55,7 @@ public final class LKMCPClientDiagnostics {
     private var mcpOperationStartedAt: TimeInterval?
     private let discoverDidUpdateRelay = PublishRelay<[String: Any]>()
     private static let discoverLock = NSLock()
+    private let snapshotLock = NSLock()
 
     private init() {}
 
@@ -49,7 +64,9 @@ public final class LKMCPClientDiagnostics {
     }
 
     public func recordConnectSnapshot(_ snapshot: LKMCPConnectSnapshot) {
+        snapshotLock.lock()
         lastConnectSnapshot = snapshot
+        snapshotLock.unlock()
     }
 
     public func recordDiscoverSummary(_ summary: [String: Any]) {
@@ -122,7 +139,10 @@ public final class LKMCPClientDiagnostics {
             "diagLineCount": LookinDiagLog.lineCount,
         ]
 
-        if let snap = conn.mcpLastConnectSnapshot ?? lastConnectSnapshot {
+        snapshotLock.lock()
+        let diagSnap = lastConnectSnapshot
+        snapshotLock.unlock()
+        if let snap = conn.mcpLastConnectSnapshot ?? diagSnap {
             state["lastConnect"] = snap.dictionaryRepresentation()
         }
         if !lastDiscoverSummary.isEmpty {
