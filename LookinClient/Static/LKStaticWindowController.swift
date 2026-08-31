@@ -112,8 +112,20 @@ final class LKStaticWindowController: LKWindowController, NSToolbarDelegate {
     ) {
         guard let appItemView = toolbarItemsMap[NSToolbarItem.Identifier.LKToolBarIdentifier_App]?.view else { return }
 
+        // App button tap: skip screenshots on first fetch to avoid blocking fetchAppInfosLock
+        // for 10-15 s (cold App response with screenshots). The popover shows device icons and
+        // app names immediately; screenshots are cosmetic and can wait for a subsequent fetch.
+        // This mirrors the same optimization in LKLaunchViewController.reloadWithAutoEntering.
+        let effectiveNeedImages: Bool
+        switch source {
+        case .appButton:
+            effectiveNeedImages = false
+        case .reloadButton, .noConnectionTips:
+            effectiveNeedImages = needImages
+        }
+
         LookinRACSignalRx.observeMainThread(
-            LKAppsManager.sharedInstance.fetchAppsForPopover(withImage: needImages)
+            LKAppsManager.sharedInstance.fetchAppsForPopover(withImage: effectiveNeedImages)
         )
         .subscribe(with: self, onSuccess: { owner, apps in
             owner.presentAppSwitcherPopover(apps: apps, source: source)
